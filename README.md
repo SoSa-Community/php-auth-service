@@ -1,2 +1,3 @@
-# auth-service
+# SoSa auth Service
+
 Backend Auth service
