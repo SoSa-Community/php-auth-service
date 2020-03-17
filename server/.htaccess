@@ -2,8 +2,8 @@ AddDefaultCharset UTF-8
 
 <IfModule mod_rewrite.c>
 	RewriteEngine On
-	RewriteBase /auth-service/
-	
+	RewriteBase /
+
 	RewriteCond %{REQUEST_FILENAME} !-f  
 	RewriteCond %{HTTP_ACCEPT} !(.*images.*)
 	RewriteRule ^(.*)$ index.php?c=$1 [L,QSA]
