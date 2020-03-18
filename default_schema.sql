@@ -1,5 +1,0 @@
-DROP SCHEMA IF EXISTS `main`;
-CREATE SCHEMA IF NOT EXISTS `main` ;
-
-USE `main`;
-
