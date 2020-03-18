@@ -17,6 +17,8 @@ RUN wget http://rpms.remirepo.net/enterprise/remi-release-7.rpm \
 && yum-config-manager --enable remi-php74 \
 && yum -y install php php-devel php-gd php-pdo php-soap php-xmlrpc php-xml php-phpunit-PHPUnit php-mysql
 
+COPY Ubiquity.conf /etc/httpd/conf.d/ubiquity.conf
+
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
