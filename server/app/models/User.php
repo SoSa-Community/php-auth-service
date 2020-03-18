@@ -13,8 +13,13 @@ class User{
 	private $username;
 	private $password;
 	
+	/**
+	 * @column("name"=>"email_hash")
+	 */
+	private $emailHash = '';
+	
 	public function verifyPassword(string $password){
-		if($password === $this->password){
+		if(password_verify($password, $this->password)){
 			return true;
 		}
 		return false;
@@ -28,5 +33,10 @@ class User{
 	
 	public function getPassword(){return $this->password;}
 	public function setPassword(string $password){$this->password = $password;}
+	
+	public function getEmailHash(){return $this->emailHash;}
+	public function setEmailHash(string $hash){$this->emailHash = $hash;}
+	
+	
 	
 }
