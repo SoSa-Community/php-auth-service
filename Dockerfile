@@ -22,6 +22,10 @@ COPY Ubiquity.conf /etc/httpd/conf.d/ubiquity.conf
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Install Ubiquity Dev tools
+RUN composer global require phpmv/ubiquity-devtools
+RUN echo "export PATH=/root/.composer/vendor/bin:\$PATH" > /root/.bashrc
+
 # Install MariaDB
 COPY MariaDB.repo /etc/yum.repos.d/MariaDB.repo
 RUN yum clean all;yum -y install mariadb-server mariadb-client
