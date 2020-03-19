@@ -3,7 +3,7 @@
 namespace models;
 
 /**
- * @table("name"=>"users")
+ * @table("name"=>"user")
  **/
 class User{
 	/**
