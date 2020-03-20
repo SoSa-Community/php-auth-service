@@ -41,11 +41,9 @@ class RegistrationController extends ControllerBase{
 					$response['error'] = 'a user with that username or e-mail address already exists';
 				}else{
 					
-					$passwordHash = password_hash($password, PASSWORD_DEFAULT, ['cost' => 15]);
-					
 					$user = new User();
 					$user->setUsername($username);
-					$user->setPassword($passwordHash);
+					$user->hashPasswordAndSet($password);
 					$user->setEmailHash($emailHash);
 					
 					if(DAO::save($user)){
