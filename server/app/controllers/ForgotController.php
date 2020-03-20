@@ -73,20 +73,21 @@ class ForgotController extends ControllerBase{
 	}
 	
 	/**
-	 * @post("forgot/reset")
+	 * @put("forgot/reset")
 	 */
 	public function reset(){
 		$response = ['status' => 'failure', 'error' => 'unknown error'];
 		
-		$token = $_POST['token'] ?? null;
-		$transient = $_POST['transient'] ?? null;
-		$password = $_POST['password'] ?? null;
+		$token = $_PUT['token'] ?? null;
+		$transient = $_PUT['transient'] ?? null;
+		$password = $_PUT['password'] ?? null;
 		
 		if($token && $transient && $password){
 			try{
 				$reset = DAO::getOne(PasswordReset::class, 'token = ? AND transient = ? AND expiry >= ?', false,
 						[$token, $transient, date('Y-m-j H:i',strtotime('-15 minutes'))]
 				);
+				
 				if(!empty($reset)){
 					$user = DAO::getOne(User::class, 'id = ?', false, [$reset->getUserId()]);
 					if(!empty($user)){

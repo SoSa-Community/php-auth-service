@@ -13,7 +13,7 @@ class LoginController extends ControllerBase{
 	public function index(){return [];}
 	
 	/**
-	 * @post("login", "methods" =>["post"])
+	 * @post("login")
 	 */
 	public function login(){
 		$response = ['status' => 'failure', 'error' => 'invalid credentials'];

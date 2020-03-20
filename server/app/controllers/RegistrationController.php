@@ -13,7 +13,7 @@ class RegistrationController extends ControllerBase{
 	public function index(){return [];}
 	
 	/**
-	 * @post("register", "methods" =>["post"])
+	 * @post("register")
 	 */
 	public function register(){
 		$response = ['status' => 'failure', 'error' => 'unknown error'];
