@@ -35,7 +35,7 @@ class ForgotController extends ControllerBase{
 					
 					$reset->generateExpiry();
 					$reset->generateToken();
-					
+				
 					if(DAO::save($reset)){
 						unset($response['error']);
 						$response['status'] = 'success';
@@ -73,14 +73,14 @@ class ForgotController extends ControllerBase{
 	}
 	
 	/**
-	 * @put("forgot/reset")
+	 * @post("forgot/reset")
 	 */
 	public function reset(){
 		$response = ['status' => 'failure', 'error' => 'unknown error'];
 		
-		$token = $_PUT['token'] ?? null;
-		$transient = $_PUT['transient'] ?? null;
-		$password = $_PUT['password'] ?? null;
+		$token = $_POST['token'] ?? null;
+		$transient = $_POST['transient'] ?? null;
+		$password = $_POST['password'] ?? null;
 		
 		if($token && $transient && $password){
 			try{
@@ -96,8 +96,12 @@ class ForgotController extends ControllerBase{
 						if(DAO::save($user)){
 							unset($response['error']);
 							$response['status'] = 'success';
+							
+							DAO::remove($reset);
 						}
 					}
+				}else{
+					$response['error'] = 'Token expired';
 				}
 			}catch (DAOException $exception){
 			

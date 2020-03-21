@@ -18,7 +18,7 @@ CREATE TABLE `password_reset` (
   `user_id` BIGINT(20) UNSIGNED NOT NULL,
   `token` VARCHAR(255) NULL,
   `expiry` DATETIME NULL,
-  `transient` VARCHAR(45) NULL,
+  `transient` VARCHAR(100) NULL,
   PRIMARY KEY (`user_id`),
   UNIQUE INDEX `token` (`token` ASC),
   CONSTRAINT `user_id`

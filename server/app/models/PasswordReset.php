@@ -12,21 +12,21 @@ class PasswordReset{
 	 */
 	private $userId;
 	
-	private $token;
-	private $expiry;
-	private $transient;
+	private $token='';
+	private $expiry='';
+	private $transient='';
 	
 	public function getUserId(){return $this->userId;}
 	public function setUserId($userId){$this->userId = $userId;}
 	
 	public function getToken(){return $this->token;}
-	public function setToken(string $token){$this->token = $token;}
+	public function setToken($token){$this->token = $token;}
 	
 	public function getExpiry(){return $this->expiry;}
 	public function setExpiry($expiry){$this->expiry = $expiry;}
 	
 	public function getTransient(){return $this->transient;}
-	public function setTransient(string $transient){$this->transient = $transient;}
+	public function setTransient($transient){$this->transient = $transient;}
 	
 	public function generateToken(){
 		$this->setToken(bin2hex(random_bytes(254)));
