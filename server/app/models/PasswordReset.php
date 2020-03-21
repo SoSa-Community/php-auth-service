@@ -10,11 +10,11 @@ class PasswordReset{
 	 * @id
 	 * @column("name"=>"user_id")
 	 */
-	private $userId;
+	private $userId = 0;
 	
-	private $token='';
-	private $expiry='';
-	private $transient='';
+	private $token = '';
+	private $expiry = '';
+	private $transient = '';
 	
 	public function getUserId(){return $this->userId;}
 	public function setUserId($userId){$this->userId = $userId;}
