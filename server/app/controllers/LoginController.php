@@ -27,10 +27,9 @@ class LoginController extends ControllerBase{
 				if(!empty($user)){
 					
 					if($user->verifyPassword($_POST['password'])){
-						unset($user->_rest['password']);
 						unset($response['error']);
 						
-						$response['user'] = $user->_rest;
+						$response['user'] = $user->getPublicOutput();
 						$response['status'] = 'success';
 					}
 				}

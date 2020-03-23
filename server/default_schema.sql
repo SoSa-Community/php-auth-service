@@ -20,7 +20,6 @@ CREATE TABLE `password_reset` (
   `expiry` DATETIME NULL,
   `transient` VARCHAR(100) NULL,
   PRIMARY KEY (`user_id`),
-  UNIQUE INDEX `token` (`token` ASC),
   CONSTRAINT `user_id`
     FOREIGN KEY (`user_id`)
     REFERENCES `user` (`id`)
@@ -28,3 +27,16 @@ CREATE TABLE `password_reset` (
     ON UPDATE NO ACTION
 );
 
+CREATE TABLE `main`.`provider_user` (
+  `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `provider` VARCHAR(45) NULL,
+  `unique_id` VARCHAR(255) NOT NULL,
+  `user_id` BIGINT(20) UNSIGNED NOT NULL,
+  `access_token` VARCHAR(255) NULL,
+  `refresh_token` VARCHAR(255) NULL,
+  `access_token_expiry` DATETIME NULL,
+  `created` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  INDEX `provider_unique` (`provider` ASC, `unique_id` ASC),
+  INDEX `provider_user_unique` (`provider` ASC, `unique_id` ASC, `user_id` ASC)
+);

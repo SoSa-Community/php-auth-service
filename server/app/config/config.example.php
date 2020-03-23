@@ -25,5 +25,14 @@ return array(
 		"mvcNS"=>["models"=>"models","controllers"=>"controllers","rest"=>""],
 		"isRest"=>function(){
 			return \Ubiquity\utils\http\URequest::getUrlParts()[0]==="rest";
-		}
+		},
+		"providers" => [
+				"imgur" => [
+						"clientID" => '',
+						"secret" => '',
+						"mashapeAuth" => '',
+						"apiURI" => 'https://api.imgur.com/3',
+						"oauthURI" => 'https://api.imgur.com/oauth2'
+				]
+		]
 );

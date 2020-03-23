@@ -41,7 +41,16 @@ class User{
 	public function getEmailHash(){return $this->emailHash;}
 	public function setEmailHash($hash){$this->emailHash = $hash;}
 	
-	
+	/**
+	 * Returns an array of elements for public consumption
+	 * @return array
+	 */
+	public function getPublicOutput(){
+		return array(
+				"id" => $this->id,
+				"username" => $this->username
+		);
+	}
 	
 	
 	
