@@ -4,7 +4,7 @@ namespace controllers;
 /**
  * Controller IndexController
  **/
-class IndexController extends ControllerBase{
+class Index extends ControllerBase{
 
 	public function index(){
 		echo json_encode([]);

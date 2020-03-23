@@ -8,7 +8,7 @@ use Ubiquity\orm\DAO;
 /**
  * Controller RegistrationController
  **/
-class RegistrationController extends ControllerBase{
+class Registration extends ControllerBase{
 	
 	public function index(){return [];}
 	

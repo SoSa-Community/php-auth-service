@@ -9,7 +9,7 @@ use Ubiquity\orm\DAO;
 /**
  * Controller ForgotController
  **/
-class ForgotController extends ControllerBase{
+class Forgot extends ControllerBase{
 	
 	public function index(){return [];}
 	

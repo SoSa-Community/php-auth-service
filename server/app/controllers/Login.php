@@ -8,7 +8,7 @@ use Ubiquity\orm\DAO;
 /**
  * Controller LoginController
  **/
-class LoginController extends ControllerBase{
+class Login extends ControllerBase{
 	
 	public function index(){return [];}
 	
