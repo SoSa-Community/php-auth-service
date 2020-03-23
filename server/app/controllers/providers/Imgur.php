@@ -5,6 +5,7 @@ use \controllers\ControllerBase;
 use models\ProviderUser;
 use models\User;
 use Ubiquity\orm\DAO;
+use Ubiquity\controllers\Startup;
 
 /**
  * Imgur Controller
@@ -21,9 +22,7 @@ class Imgur extends ControllerBase {
 	
 	public function __construct(){
 		
-		$config = include(ROOT.'config/config.php');
-		
-		$providerConfig = $config['providers']['imgur'];
+		$providerConfig = Startup::$config['providers']['imgur'];
 		
 		$this->clientID = $providerConfig['clientID'];
 		$this->secret = $providerConfig['secret'];
