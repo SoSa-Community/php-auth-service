@@ -6,7 +6,7 @@ use Ubiquity\exceptions\DAOException;
 use Ubiquity\orm\DAO;
 
 /**
- * Controller LoginController
+ * Login Controller
  **/
 class Login extends ControllerBase{
 	

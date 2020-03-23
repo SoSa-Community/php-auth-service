@@ -7,7 +7,7 @@ use models\User;
 use Ubiquity\orm\DAO;
 
 /**
- * Controller Imgur
+ * Imgur Controller
  **/
 class Imgur extends ControllerBase {
 

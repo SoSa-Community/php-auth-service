@@ -7,7 +7,7 @@ use Ubiquity\exceptions\DAOException;
 use Ubiquity\orm\DAO;
 
 /**
- * Controller ForgotController
+ * Forgot Controller
  **/
 class Forgot extends ControllerBase{
 	

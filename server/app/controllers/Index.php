@@ -2,7 +2,7 @@
 namespace controllers;
 
 /**
- * Controller IndexController
+ * Index Controller
  **/
 class Index extends ControllerBase{
 
