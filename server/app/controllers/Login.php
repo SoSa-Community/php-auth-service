@@ -16,27 +16,37 @@ class Login extends ControllerBase{
 	 * @post("login")
 	 */
 	public function login(){
-		$response = ['status' => 'failure', 'error' => 'invalid credentials'];
 		
-		$username = $_POST['username'] ?? null;
-		$password = $_POST['password'] ?? null;
+		$responseData = null;
+		$status = 'failure';
+		$error = new \Error('Incorrect username or password',1);
 		
-		if($username && $password){
+		if($_SERVER['CONTENT_TYPE'] === 'application/json'){
+			$request = json_decode(trim(file_get_contents("php://input")), true);
+		}else{
+			$request = $_POST;
+		}
+		
+		$username = $request['username'] ?? null;
+		$password = $request['password'] ?? null;
+		
+		if(empty($username) || empty($password)){
+			$error = new \Error('Username or password must not be empty',2);
+		}else{
 			try{
-				$user = DAO::getOne(User::class, 'username = ?', false, [$_POST['username']]);
+				$user = DAO::getOne(User::class, 'username = ?', false, [$username]);
 				if(!empty($user)){
 					
-					if($user->verifyPassword($_POST['password'])){
-						unset($response['error']);
-						
-						$response['user'] = $user->getPublicOutput();
-						$response['status'] = 'success';
+					if($user->verifyPassword($password)){
+						$status = 'success';
+						$error = null;
+						$responseData = ['user' => $user->getPublicOutput()];
 					}
 				}
 			}catch (DAOException $exception){
 			
 			}
 		}
-		echo json_encode($response);
+		echo $this::generateResponse($status, $responseData, $error);
 	}
 }
