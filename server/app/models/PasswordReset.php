@@ -13,6 +13,7 @@ class PasswordReset{
 	private $userId = 0;
 	
 	private $token = '';
+	private $pin = '';
 	private $expiry = '';
 	private $transient = '';
 	
@@ -22,22 +23,45 @@ class PasswordReset{
 	public function getToken(){return $this->token;}
 	public function setToken($token){$this->token = $token;}
 	
+	public function getPin(){return $this->pin;}
+	public function setPin($pin){$this->pin = $pin;}
+	
 	public function getExpiry(){return $this->expiry;}
 	public function setExpiry($expiry){$this->expiry = $expiry;}
 	
 	public function getTransient(){return $this->transient;}
 	public function setTransient($transient){$this->transient = $transient;}
 	
-	public function generateToken(){
-		$this->setToken(bin2hex(random_bytes(254)));
+	public static function generateToken(){
+		return bin2hex(random_bytes(125));
 	}
 	
-	public function generateTransient(){
-		$this->setTransient(bin2hex(random_bytes(45)));
+	public function generateAndSetToken(){
+		$this->setToken($this::generateToken());
 	}
 	
-	public function generateExpiry(){
-		$this->setExpiry(date('Y-m-j H:i:s', strtotime('+15 minutes')));
+	public static function generatePin($emailHash=''){
+		return strtoupper(bin2hex(random_bytes(3))) . "-" . $emailHash;
+	}
+
+	public function generateAndSetPin($emailHash=''){
+		return $this->setPin($this::generatePin($emailHash));
+	}
+	
+	public static function generateTransient(){
+		return bin2hex(random_bytes(24));
+	}
+	
+	public function generateAndSetTransient(){
+		$this->setTransient($this::generateTransient());
+	}
+	
+	public static function generateExpiry(){
+		return date('Y-m-j H:i:s', strtotime('+15 minutes'));
+	}
+	
+	public function generateAndSetExpiry(){
+		$this->setExpiry($this::generateExpiry());
 	}
 	
 	

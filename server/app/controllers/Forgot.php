@@ -17,13 +17,16 @@ class Forgot extends ControllerBase{
 	 * @post("forgot")
 	 */
 	public function forgot(){
-		$response = ['status' => 'failure', 'error' => 'unknown error'];
+		$responseData = null;
+		$status = 'failure';
+		$error = new \Error('Please provide an e-mail');
 		
 		$email = $_POST['email'] ?? null;
 		
 		if($email){
 			try{
-				$user = DAO::getOne(User::class, 'email_hash = ?', false, [md5($email)]);
+				$emailHash = User::generateEmailHash($email);
+				$user = DAO::getOne(User::class, 'email_hash = ?', false, [$emailHash]);
 				if(!empty($user)){
 					
 					$reset = DAO::getOne(PasswordReset::class, 'user_id = ?', false, [$user->getId()]);
@@ -33,50 +36,84 @@ class Forgot extends ControllerBase{
 						$reset->setUserId($user->getId());
 					}
 					
-					$reset->generateExpiry();
-					$reset->generateToken();
+					$reset->generateAndSetExpiry();
+					$reset->generateAndSetToken();
+					$reset->generateAndSetPin($emailHash);
 				
 					if(DAO::save($reset)){
-						unset($response['error']);
-						$response['status'] = 'success';
+						$status = 'success';
+						$error = null;
+					}else{
+						$error = new \Error('System error, please contact administrator');
 					}
+				}else{
+					$error = new \Error('E-mail not found');
 				}
 			}catch (DAOException $exception){
-			
+				$error = new \Error('System error, please contact administrator');
 			}
 		}
-		echo json_encode($response);
+		
+		echo $this::generateResponse($status, $responseData, $error);
+		
 	}
 	
 	/**
 	 * @get("forgot/validate")
 	 */
 	public function validate(){
-		$response = ['status' => 'failure', 'error' => 'unknown error'];
-		if($token = $_GET['token'] ?? null){
+		$responseData = null;
+		$status = 'failure';
+		$error = new \Error('Please provide a valid token');
+		
+		$pin = $_GET['pin'] ?? null;
+		$email = $_GET['email'] ?? null;
+		$expiryCheck = date('Y-m-j H:i', strtotime('-15 minutes'));
+		$usingPin = false;
+		
+		if(!empty($pin)){
+			if(!empty($email)) {
+				$usingPin = true;
+				$emailHash = User::generateEmailHash($email);
+				$token = $pin . "-" . $emailHash;
+			}
+		}else{
+			$token = $_GET['token'] ?? null;
+		}
+		
+		if(!empty($token)){
 			try{
-				$reset = DAO::getOne(PasswordReset::class, 'token = ? AND expiry >= ?', false, [$token, date('Y-m-j H:i',strtotime('-15 minutes'))]);
+				$reset = DAO::getOne(PasswordReset::class, $usingPin ? 'pin':'token' . ' = ? AND expiry >= ?', false, [$token, $expiryCheck]);
 				if(!empty($reset)){
-					$reset->generateTransient();
+					$reset->generateAndSetTransient();
 					
 					if(DAO::save($reset)){
-						unset($response['error']);
-						$response['status'] = 'success';
-						$response['transient'] = $reset->getTransient();
+						$error = null;
+						$status = 'success';
+						
+						$responseData = array('transient' => $reset->getTransient());
+						
+						if($usingPin) $responseData['token'] = $reset->getToken();
+					}else{
+						$error = new \Error('System error, please contact administrator');
 					}
 				}
 			}catch (DAOException $exception){
-			
+				$error = new \Error('System error, please contact administrator');
 			}
+		}else{
+			$error = new \Error('Please provide a valid token or pin');
 		}
-		echo json_encode($response);
+		echo $this::generateResponse($status, $responseData, $error);
 	}
 	
 	/**
 	 * @post("forgot/reset")
 	 */
 	public function reset(){
-		$response = ['status' => 'failure', 'error' => 'unknown error'];
+		$responseData = null;
+		$status = 'failure';
+		$error = new \Error('Unknown Error');
 		
 		$token = $_POST['token'] ?? null;
 		$transient = $_POST['transient'] ?? null;
@@ -107,7 +144,7 @@ class Forgot extends ControllerBase{
 			
 			}
 		}else{
-			$response['error'] = 'Please provide a token, transient and password';
+			$response['error'] = '';
 		}
 		
 		echo json_encode($response);
