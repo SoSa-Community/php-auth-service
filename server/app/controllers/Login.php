@@ -19,13 +19,9 @@ class Login extends ControllerBase{
 		
 		$responseData = null;
 		$status = 'failure';
-		$error = new \Error('Incorrect username or password',1);
+		$error = new \Error('Incorrect username or password', 1);
 		
-		if($_SERVER['CONTENT_TYPE'] === 'application/json'){
-			$request = json_decode(trim(file_get_contents("php://input")), true);
-		}else{
-			$request = $_POST;
-		}
+		$request = $_POST;
 		
 		$username = $request['username'] ?? null;
 		$password = $request['password'] ?? null;
@@ -44,7 +40,7 @@ class Login extends ControllerBase{
 					}
 				}
 			}catch (DAOException $exception){
-			
+				$error = new \Error('System error, please contact administrator');
 			}
 		}
 		echo $this::generateResponse($status, $responseData, $error);
