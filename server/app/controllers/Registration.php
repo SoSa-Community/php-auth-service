@@ -34,7 +34,7 @@ class Registration extends ControllerBase{
 		}
 		else{
 			try{
-				$emailHash = md5($email);
+				$emailHash = User::generateEmailHash($email);
 				$existingUser = DAO::getOne(User::class, 'username = ? OR email_hash = ?', false, [$username, $emailHash]);
 				
 				if(!empty($existingUser)) {

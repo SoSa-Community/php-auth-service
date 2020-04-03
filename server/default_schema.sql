@@ -17,6 +17,7 @@ CREATE TABLE `user` (
 CREATE TABLE `password_reset` (
   `user_id` BIGINT(20) UNSIGNED NOT NULL,
   `token` VARCHAR(255) NULL,
+  `pin` VARCHAR(45) NULL,
   `expiry` DATETIME NULL,
   `transient` VARCHAR(100) NULL,
   PRIMARY KEY (`user_id`),

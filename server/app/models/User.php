@@ -25,8 +25,12 @@ class User{
 		return false;
 	}
 	
+	public function generatePasswordHash($password){
+		return password_hash($password, PASSWORD_DEFAULT, ['cost' => 10]);
+	}
+	
 	public function hashPasswordAndSet($password){
-		$this->setPassword(password_hash($password, PASSWORD_DEFAULT, ['cost' => 15]));
+		$this->setPassword($this->generatePasswordHash($password));
 	}
 	
 	public function getId(){return $this->id;}
@@ -37,6 +41,10 @@ class User{
 	
 	public function getPassword(){return $this->password;}
 	public function setPassword($password){$this->password = $password;}
+	
+	public static function generateEmailHash($email){
+		return md5($email);
+	}
 	
 	public function getEmailHash(){return $this->emailHash;}
 	public function setEmailHash($hash){$this->emailHash = $hash;}
