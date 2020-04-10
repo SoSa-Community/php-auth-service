@@ -60,6 +60,8 @@ class User{
 		);
 	}
 	
-	
+	public static function isPasswordValid($password){
+		return !empty($password) && strlen($password) >= 8;
+	}
 	
 }

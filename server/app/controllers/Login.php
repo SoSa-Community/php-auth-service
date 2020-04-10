@@ -30,7 +30,15 @@ class Login extends ControllerBase{
 			$error = new \Error('Username or password must not be empty',2);
 		}else{
 			try{
-				$user = DAO::getOne(User::class, 'username = ?', false, [$username]);
+				$criteria = [$username];
+				
+				$checkEmail = '';
+				if(preg_match('/@/',$username)){
+					$checkEmail = ' OR email_hash = ?';
+					$criteria[] = User::generateEmailHash($username);
+				}
+				
+				$user = DAO::getOne(User::class, 'username = ?'.$checkEmail, false, $criteria);
 				if(!empty($user)){
 					
 					if($user->verifyPassword($password)){
