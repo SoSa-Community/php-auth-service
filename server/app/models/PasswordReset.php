@@ -2,6 +2,8 @@
 
 namespace models;
 
+use Ubiquity\controllers\Startup;
+
 /**
  * @table("name"=>"password_reset")
  **/
@@ -16,6 +18,10 @@ class PasswordReset{
 	private $pin = '';
 	private $expiry = '';
 	private $transient = '';
+	
+	private static $tokenSize = 255;
+	private static $pinSize = 45;
+	private static $transientSize = 100;
 	
 	public function getUserId(){return $this->userId;}
 	public function setUserId($userId){$this->userId = $userId;}
@@ -33,7 +39,7 @@ class PasswordReset{
 	public function setTransient($transient){$this->transient = $transient;}
 	
 	public static function generateToken(){
-		return bin2hex(random_bytes(125));
+		return substr(bin2hex(random_bytes(256)), 0, self::$tokenSize);
 	}
 	
 	public function generateAndSetToken(){
@@ -41,7 +47,7 @@ class PasswordReset{
 	}
 	
 	public static function generatePin($emailHash=''){
-		return strtoupper(bin2hex(random_bytes(3))) . "-" . $emailHash;
+		return substr(strtoupper(bin2hex(random_bytes(8))),0, self::$pinSize) . "-" . $emailHash;
 	}
 
 	public function generateAndSetPin($emailHash=''){
@@ -49,7 +55,7 @@ class PasswordReset{
 	}
 	
 	public static function generateTransient(){
-		return bin2hex(random_bytes(24));
+		return substr(bin2hex(random_bytes(64)), 0, self::$transientSize);
 	}
 	
 	public function generateAndSetTransient(){
@@ -57,7 +63,7 @@ class PasswordReset{
 	}
 	
 	public static function generateExpiry(){
-		return date('Y-m-j H:i:s', strtotime('+15 minutes'));
+		return date('Y-m-j H:i:s', strtotime('+'.intval(Startup::$config['passwordResetTimeout']).' minutes'));
 	}
 	
 	public function generateAndSetExpiry(){
