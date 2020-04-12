@@ -1,6 +1,7 @@
 <?php
 namespace controllers;
 
+use models\Device;
 use models\Session;
 use models\User;
 use Ubiquity\controllers\Startup;
@@ -32,7 +33,10 @@ class Login extends ControllerBase{
 		$refreshToken = $request['refresh_token'] ?? null;
 		
 		$deviceID = $request['device_id'] ?? null;
-		
+		$deviceName = $request['device_name'] ?? null;
+		$devicePlatform = $request['device_platform'] ?? null;
+		$devicePushService = $request['device_push_service'] ?? null;
+		$devicePushServiceToken = $request['device_push_service_token'] ?? null;
 		
 		$user = null;
 		$userVerified = false;
@@ -43,8 +47,8 @@ class Login extends ControllerBase{
 				if(!empty($user)){
 					$userVerified = true;
 				}
-			}catch(\Error $e){
-				$error = $e;
+			}catch(\Exception $e){
+				$error = new \Error($e->getMessage(), $e->getCode());
 			}
 		}
 		
@@ -68,18 +72,33 @@ class Login extends ControllerBase{
 						if($user->verifyPassword($password))    $userVerified = true;
 					}
 				}catch (DAOException $exception){
-					$error = new \Error('System error, please contact administrator',3);
+					$error = new \Error('System error, please contact administrator', 3);
 				}
 			}
 		}
 		
 		if($userVerified && !empty($user)){
-			$status = 'success';
-			$error = null;
-			if(!isset($session) || empty($session)){
-				$session = Session::generateNewSession($user->getId());
+			try{
+				
+				if(!empty($deviceID)){
+					$device = Device::checkRegisterDevice($user->getId(), $deviceID, $deviceName, $devicePlatform, $devicePushService, $devicePushServiceToken);
+				}
+				
+				if(!isset($session) || empty($session)){
+					$session = Session::generateNewSession($user->getId());
+				}
+				
+				$status = 'success';
+				$error = null;
+				$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
+				
+				if(isset($device) && !empty($device) && $device->isNew){
+					$responseData['device_secret'] = $device->getSecret();
+				}
+				
+			}catch(\Exception $e){
+				$error = new \Error($e->getMessage(), $e->getCode());
 			}
-			$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
 		}
 		
 		echo $this::generateResponse($status, $responseData, $error);
@@ -88,7 +107,7 @@ class Login extends ControllerBase{
 	private function loginWithSession($sessionId='', $refreshToken=''){
 		if(!empty($sessionId)){
 			try{
-				$criteria = [$sessionId, date('Y-m-j H:i', strtotime('-'.intval(Startup::$config['sessionTimeout']).' minutes'))];
+				$criteria = [$sessionId, date('Y-m-j H:i')];
 				$refreshTokenCheck = '';
 				
 				if(!empty($refreshToken)){
@@ -99,6 +118,7 @@ class Login extends ControllerBase{
 				
 				$session = DAO::getOne(Session::class, '(id = ? AND expiry >= ?)'. $refreshTokenCheck, false, $criteria);
 				if(!empty($session)){
+					
 					$user = DAO::getById(User::class, $session->getUserId());
 					if(!empty($user)){
 						/** if a refresh token is passed, we should generate a new session even if the current one hasn't expired **/
@@ -109,19 +129,21 @@ class Login extends ControllerBase{
 						else if(!$session->hasExpired()){
 							$session->generateAndSetExpiry();
 							if(!DAO::save($session)){
-								throw new \Error('Could not update session, a system error occurred');
+								throw new \Exception('Could not update session, a system error occurred');
 							}
 						}
 						return [$user, $session];
 					}else{
-						throw new \Error('Session invalid, user not found');
+						throw new \Exception('Session invalid, user not found');
 					}
 				}else{
-					throw new \Error('Session invalid');
+					throw new \Exception('Session invalid');
 				}
 			}catch (DAOException $exception){
-				throw new \Error('System error, please contact administrator', 4);
+				throw new \Exception('System error, please contact administrator', 4);
 			}
 		}
 	}
+
+	
 }
