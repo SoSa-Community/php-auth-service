@@ -26,13 +26,13 @@ abstract class ControllerBase extends Controller{
 	
 	public function finalize() {}
 	
-	public static function generateResponse(string $status='failure', $data=null, \Error $error=null){
+	public static function generateResponse(string $status='failure', $data=null, \Throwable $error=null){
 		$response = ['status' => $status];
 		
 		if((!empty($data) && !empty($error)) || !empty($data))  $response['response'] = $data;
 		if(!empty($error)){
 			
-			if(is_a($error, '\Error')){
+			if(is_a($error, '\Throwable')){
 				$error = ['message' => $error->getMessage(), 'code' => $error->getCode()];
 			}
 			

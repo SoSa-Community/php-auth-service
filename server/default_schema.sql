@@ -52,14 +52,13 @@ CREATE TABLE `main`.`sessions` (
 
 CREATE TABLE `main`.`devices` (
   `id` VARCHAR(100) NOT NULL,
-  `user_id` BIGINT(20) UNSIGNED NULL,
-  `unique` VARCHAR(255) NULL,
-  `push_service` varchar(25) DEFAULT NULL,
+  `name` varchar(100) DEFAULT NOT NULL,
+  `user_id` BIGINT(20) UNSIGNED NOT NULL,
+  `push_service` ENUM('android','ios','other') DEFAULT 'other',
   `push_service_token` longtext,
-  `platform` varchar(45) DEFAULT NULL,
+  `platform` ENUM('android','ios','other')  DEFAULT 'other',
   `extra` longtext,
-  `secret` varchar(255) DEFAULT NULL,
-  `expiry` DATETIME NULL DEFAULT,
+  `secret` varchar(32) DEFAULT NOT NULL,
   `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `updated` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`));

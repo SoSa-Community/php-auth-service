@@ -83,7 +83,9 @@ class Forgot extends ControllerBase{
 		
 		if(!empty($token)){
 			try{
-				$reset = DAO::getOne(PasswordReset::class, $usingPin ? 'pin':'token' . ' = ? AND expiry >= ?', false, [$token, $expiryCheck]);
+				$sql = ($usingPin ? 'pin':'token') . ' = ? AND expiry >= ?';
+				
+				$reset = DAO::getOne(PasswordReset::class, $sql, false, [$token, $expiryCheck]);
 				if(!empty($reset)){
 					$reset->generateAndSetTransient();
 					
@@ -119,34 +121,43 @@ class Forgot extends ControllerBase{
 		$transient = $_POST['transient'] ?? null;
 		$password = $_POST['password'] ?? null;
 		
-		if($token && $transient && $password){
-			try{
-				$reset = DAO::getOne(PasswordReset::class, 'token = ? AND transient = ? AND expiry >= ?', false,
-						[$token, $transient, date('Y-m-j H:i',strtotime('-15 minutes'))]
-				);
-				
-				if(!empty($reset)){
-					$user = DAO::getOne(User::class, 'id = ?', false, [$reset->getUserId()]);
-					if(!empty($user)){
-						$user->hashPasswordAndSet($password);
-						
-						if(DAO::save($user)){
-							unset($response['error']);
-							$response['status'] = 'success';
+		if(empty($token)){
+			$error = new \Error('Please provide a valid token');
+		}elseif(empty($transient)){
+			$error = new \Error('Please provide a valid transient');
+		}
+		else{
+			if(!User::isPasswordValid($password)){
+				$error = new \Error('Please provide a valid password');
+			}else{
+				try{
+					$reset = DAO::getOne(PasswordReset::class, 'token = ? AND transient = ? AND expiry >= ?', false,
+							[$token, $transient, date('Y-m-j H:i')]
+					);
+					
+					if(!empty($reset)){
+						$user = DAO::getOne(User::class, 'id = ?', false, [$reset->getUserId()]);
+						if(!empty($user)){
+							$user->hashPasswordAndSet($password);
 							
-							DAO::remove($reset);
+							if(DAO::save($user)){
+								$error = null;
+								
+								$responseData['username'] = $user->getUsername();
+								
+								$status = 'success';
+								DAO::remove($reset);
+							}
 						}
+					}else{
+						$error = new \Error('Token expired');
 					}
-				}else{
-					$response['error'] = 'Token expired';
+				}catch (DAOException $exception){
+				
 				}
-			}catch (DAOException $exception){
-			
 			}
-		}else{
-			$response['error'] = '';
 		}
 		
-		echo json_encode($response);
+		echo $this::generateResponse($status, null, $error);
 	}
 }
