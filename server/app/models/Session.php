@@ -17,7 +17,7 @@ class Session{
 	/**
 	 * @column("name"=>"user_id")
 	 */
-	private string $userId = '';
+	private int $userId = 0;
 	
 	/**
 	 * @column("name"=>"refresh_token")
@@ -105,10 +105,10 @@ class Session{
 			if(DAO::save($session)){
 				return $session;
 			}else{
-				throw new \Error('Could not generate a session, a system error occurred');
+				throw new \Exception('Could not generate a session, a system error occurred');
 			}
 		}else{
-			throw new \Error('Could not generate a session, no user id provided');
+			throw new \Exception('Could not generate a session, no user id provided');
 		}
 	}
 	
