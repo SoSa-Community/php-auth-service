@@ -45,13 +45,14 @@ CREATE TABLE `main`.`provider_user` (
 CREATE TABLE `main`.`sessions` (
   `id` VARCHAR(100) NOT NULL,
   `user_id` BIGINT(20) UNSIGNED NULL,
+  `device_id` VARCHAR(255) NULL DEFAULT NULL,
   `refresh_token` VARCHAR(100) NULL,
   `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `updated` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   PRIMARY KEY (`id`));
 
 CREATE TABLE `main`.`devices` (
-  `id` VARCHAR(100) NOT NULL,
+  `id` VARCHAR(255) NOT NULL,
   `name` varchar(100) DEFAULT NOT NULL,
   `user_id` BIGINT(20) UNSIGNED NOT NULL,
   `push_service` ENUM('android','ios','other') DEFAULT 'other',

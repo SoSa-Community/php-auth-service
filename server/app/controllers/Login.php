@@ -43,7 +43,7 @@ class Login extends ControllerBase{
 		
 		if(!empty($sessionId)){
 			try{
-				list($user, $session) = $this->loginWithSession($sessionId, $refreshToken);
+				list($user, $session) = $this->loginWithSession($sessionId, $refreshToken, $deviceID);
 				if(!empty($user)){
 					$userVerified = true;
 				}
@@ -85,7 +85,7 @@ class Login extends ControllerBase{
 				}
 				
 				if(!isset($session) || empty($session)){
-					$session = Session::generateNewSession($user->getId());
+					$session = Session::generateNewSession($user->getId(), $deviceID);
 				}
 				
 				$status = 'success';
@@ -104,7 +104,7 @@ class Login extends ControllerBase{
 		echo $this::generateResponse($status, $responseData, $error);
 	}
 	
-	private function loginWithSession($sessionId='', $refreshToken=''){
+	private function loginWithSession($sessionId='', $refreshToken='', $deviceId=null){
 		if(!empty($sessionId)){
 			try{
 				$criteria = [$sessionId, date('Y-m-j H:i')];
@@ -119,6 +119,10 @@ class Login extends ControllerBase{
 				$session = DAO::getOne(Session::class, '(id = ? AND expiry >= ?)'. $refreshTokenCheck, false, $criteria);
 				if(!empty($session)){
 					
+					if($session->getDeviceId() !== $deviceId){
+						throw new \Exception('Session belongs to another device');
+					}
+					
 					$user = DAO::getById(User::class, $session->getUserId());
 					if(!empty($user)){
 						/** if a refresh token is passed, we should generate a new session even if the current one hasn't expired **/
@@ -127,9 +131,11 @@ class Login extends ControllerBase{
 							Session::generateNewSession($user->getId());
 						}
 						else if(!$session->hasExpired()){
-							$session->generateAndSetExpiry();
-							if(!DAO::save($session)){
-								throw new \Exception('Could not update session, a system error occurred');
+							if($session->shouldUpdateExpiry()){
+								$session->generateAndSetExpiry();
+								if (!DAO::save($session)) {
+									throw new \Exception('Could not update session, a system error occurred');
+								}
 							}
 						}
 						return [$user, $session];

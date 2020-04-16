@@ -20,6 +20,11 @@ class Session{
 	private int $userId = 0;
 	
 	/**
+	 * @column("name"=>"device_id")
+	 */
+	private string $deviceId = '';
+	
+	/**
 	 * @column("name"=>"refresh_token")
 	 */
 	private string $refreshToken = '';
@@ -29,11 +34,15 @@ class Session{
 	private string $created = '';
 	private string $updated = '';
 	
+	
 	public function getId(){return $this->id;}
 	public function setId($id){$this->id = $id;}
 	
 	public function getUserId(){return $this->userId;}
 	public function setUserId($userId){$this->userId = $userId;}
+	
+	public function getDeviceId(){return $this->deviceId;}
+	public function setDeviceId($deviceId){$this->deviceId = $deviceId;}
 	
 	public function getRefreshToken(){return $this->refreshToken;}
 	public function setRefreshToken($refreshToken){$this->refreshToken = $refreshToken;}
@@ -84,24 +93,44 @@ class Session{
 	}
 	
 	public function hasExpired(){
-		$maxExpiry = strtotime('-'.intval(Startup::$config['sessionTimeout']).' minutes');
-		if(strtotime($this->getExpiry()) > $maxExpiry){
-			return true;
+		if(strtotime($this->getExpiry()) > time()){
+			return false;
 		}
-		return false;
-	}
-	
-	public function isSessionValid(){
 		return true;
 	}
 	
-	public static function generateNewSession($userId=null){
+	public function shouldUpdateExpiry(){
+		$diff = strtotime($this->getExpiry()) - time();
+		if($diff >= intval(Startup::$config['sessionUpdateInterval'])) return false;
+		return true;
+	}
+	
+	public static function generateNewSession($userId=null, $deviceId=null){
 		if(!empty($userId)){
-			$session = new self();
-			$session->generateAndSetId();
-			$session->generateAndSetRefreshToken();
+			
+			if(!empty($deviceId)){
+				$session = DAO::getOne(Session::class, 'device_id=?', false, [$deviceId]);
+				if(!empty($session)){
+					if($session->hasExpired()){
+						DAO::remove($session);
+						unset($session);
+					}else{
+						if(!$session->shouldUpdateExpiry()){
+							return $session;
+						}
+					}
+				}
+			}
+			
+			if(!isset($session) || empty($session)){
+				$session = new self();
+				$session->generateAndSetId();
+				$session->generateAndSetRefreshToken();
+				$session->setUserId($userId);
+				$session->setDeviceId($deviceId);
+			}
+			
 			$session->generateAndSetExpiry();
-			$session->setUserId($userId);
 			if(DAO::save($session)){
 				return $session;
 			}else{

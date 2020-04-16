@@ -4,7 +4,7 @@ namespace models;
 
 use Ubiquity\controllers\Startup;
 use Ubiquity\orm\DAO;
-
+use \Firebase\JWT\JWT;
 /**
  * @table("name"=>"devices")
  **/
@@ -137,5 +137,21 @@ class Device{
 		}else{
 			throw new \Exception('No device id provided');
 		}
+	}
+	
+	public function validateAndDecodeToken($token){
+		JWT::$leeway = 60;
+		
+		$token = JWT::decode($token, $this->secret, array('HS256'));
+		if(!empty($token)){
+			if($token->device_id !== $this->getId()){
+				throw new \Exception("Device ID doesn't match");
+			}
+			
+			if($token->user_id !== $this->getUserId()){
+				throw new \Exception("User ID doesn't match");
+			}
+		}
+		return $token;
 	}
 }
