@@ -34,5 +34,14 @@ return array(
 						"apiURI" => 'https://api.imgur.com/3',
 						"oauthURI" => 'https://api.imgur.com/oauth2'
 				]
-		]
+		],
+		"resetTokenSize" => 255,
+		"resetPinSize" => 6,
+		"resetTransientSize" => 100,
+		"sessionIdSize" => 100,
+		"refreshTokenSize" => 100,
+		"passwordResetTimeout" => 15,
+		"sessionTimeout" => 60,
+		"sessionUpdateInterval" => 300,
+		"deviceSecretSize" => 32
 );

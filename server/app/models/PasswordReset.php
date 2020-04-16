@@ -19,10 +19,6 @@ class PasswordReset{
 	private $expiry = '';
 	private $transient = '';
 	
-	private static $tokenSize = 255;
-	private static $pinSize = 45;
-	private static $transientSize = 100;
-	
 	public function getUserId(){return $this->userId;}
 	public function setUserId($userId){$this->userId = $userId;}
 	
@@ -39,7 +35,7 @@ class PasswordReset{
 	public function setTransient($transient){$this->transient = $transient;}
 	
 	public static function generateToken(){
-		return substr(bin2hex(random_bytes(256)), 0, self::$tokenSize);
+		return substr(bin2hex(random_bytes(256)), 0, Startup::$config['resetTokenSize']);
 	}
 	
 	public function generateAndSetToken(){
@@ -47,15 +43,15 @@ class PasswordReset{
 	}
 	
 	public static function generatePin($emailHash=''){
-		return substr(strtoupper(bin2hex(random_bytes(8))),0, self::$pinSize) . "-" . $emailHash;
+		return substr(strtoupper(bin2hex(random_bytes(Startup::$config['resetPinSize']))),0, Startup::$config['resetPinSize']) . "-" . $emailHash;
 	}
 
 	public function generateAndSetPin($emailHash=''){
-		return $this->setPin($this::generatePin($emailHash));
+		$this->setPin($this::generatePin($emailHash));
 	}
 	
 	public static function generateTransient(){
-		return substr(bin2hex(random_bytes(64)), 0, self::$transientSize);
+		return substr(bin2hex(random_bytes(Startup::$config['resetTransientSize'])), 0, Startup::$config['resetTransientSize']);
 	}
 	
 	public function generateAndSetTransient(){
