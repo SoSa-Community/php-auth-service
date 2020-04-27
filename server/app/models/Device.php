@@ -38,11 +38,6 @@ class Device{
 	private string $created = '';
 	private string $updated = '';
 	
-	/**
-	 * @transient
-	 */
-	public bool $isNew = false;
-	
 	public function getId(){return $this->id;}
 	public function setId($id){$this->id = $id;}
 	
@@ -79,77 +74,54 @@ class Device{
 	public function getUpdated(){return $this->updated;}
 	public function setUpdated($updated){$this->updated = $updated;}
 	
-	public static function generateSecret(){
-		$size = intval(Startup::$config['deviceSecretSize']);
+	public static function generateId(){
+		$size = intval(Startup::$config['deviceIdSize']);
 		return substr(bin2hex(random_bytes($size)), 0, $size);
 	}
 	
-	public function generateAndSetSecret(){
-		$this->setSecret(self::generateSecret());
+	public function generateAndSetId(){
+		$this->setId(self::generateId());
 	}
 	
-	public static function checkRegisterDevice($userId=null, $id=null, $name='', $platform='other', $service='other', $token=''){
-		if(!empty($id)){
-			
-			$device = DAO::getById(Device::class, $id);
-			if(empty($device)){
-				if(empty($name)){
-					throw new \Exception('This is the first time we\'ve seen this device, please provide a valid name for it');
-				}
-				
-				$device = new self();
-				
-				$device->setId($id);
-				$device->setUserId($userId);
-				$device->setName($name);
-				$device->setPlatform($platform);
-				
-				if(!empty($service)){
-					$device->setPushService($service);
-					
-					if(!empty($token)) {
-						$device->setPushServiceToken($token);
-					}
-				}
-				
-				$device->generateAndSetSecret();
-				DAO::save($device);
-				
-				$device->isNew = true;
-			}else{
-				$changes = false;
-				
-				if($service !== $device->getPushService()){
-					$changes = true;
-					$device->setPushService($service);
-				}
-				
-				if($token !== $device->getPushServiceToken()){
-					$changes = true;
-					$device->setPushServiceToken($token);
-				}
-				
-				if($changes)    DAO::save($device);
-				
-			}
-			
-			return $device;
-		}else{
-			throw new \Exception('No device id provided');
+	public static function registerDevice($userId=null, $secret=null, $name='', $platform='other', $pushService='other', $pushToken=''){
+		if(empty($secret)) {
+			throw new \Exception('No device secret provided');
 		}
+		
+		if(empty($name)){
+			throw new \Exception('This is the first time we\'ve seen this device, please provide a valid name for it');
+		}
+		
+		$device = new self();
+		
+		$device->generateAndSetId();
+		$device->setSecret($secret);
+		$device->setUserId($userId);
+		$device->setName($name);
+		$device->setPlatform($platform);
+		
+		if(!empty($service)){
+			$device->setPushService($pushService);
+			
+			if(!empty($token)) {
+				$device->setPushServiceToken($pushToken);
+			}
+		}
+		
+		DAO::save($device);
+		return $device;
 	}
 	
 	public function validateAndDecodeToken($token){
+		/* TODO: Decide how tokens will be validated */
+		return $this->getId() === $token;
+		
 		JWT::$leeway = 60;
 		
 		$token = JWT::decode($token, $this->secret, array('HS256'));
 		if(!empty($token)){
 			if($token->device_id !== $this->getId()){
 				throw new \Exception("Device ID doesn't match");
-			}
-			
-			if($token->user_id !== $this->getUserId()){
-				throw new \Exception("User ID doesn't match");
 			}
 		}
 		return $token;

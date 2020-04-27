@@ -22,7 +22,13 @@ class Session{
 	/**
 	 * @column("name"=>"device_id")
 	 */
-	private string $deviceId = '';
+	private ?string $deviceId = '';
+	
+	/**
+	 * @manyToOne
+	 * @joinColumn("className"=>"models\\Device","name"=>"device_id","nullable"=>true)
+	 **/
+	private $device = null;
 	
 	/**
 	 * @column("name"=>"refresh_token")
@@ -43,6 +49,13 @@ class Session{
 	
 	public function getDeviceId(){return $this->deviceId;}
 	public function setDeviceId($deviceId){$this->deviceId = $deviceId;}
+	
+	public function getDevice(){
+		return DAO::getOne(Device::class, '(id = ?)', false, [$this->getDeviceId()]);
+		return $this->device;
+	}
+	public function setDevice($device){$this->device = $device;}
+	
 	
 	public function getRefreshToken(){return $this->refreshToken;}
 	public function setRefreshToken($refreshToken){$this->refreshToken = $refreshToken;}

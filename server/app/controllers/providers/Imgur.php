@@ -21,8 +21,11 @@ class Imgur extends ControllerBase {
 	
 	
 	public function __construct(){
-		
-		$providerConfig = Startup::$config['providers']['imgur'];
+		$this->setupProviderConfig();
+	}
+	
+	private function setupProviderConfig(){
+		$providerConfig = Startup::$config['providers'][$this->provider];
 		
 		$this->clientID = $providerConfig['clientID'];
 		$this->secret = $providerConfig['secret'];
@@ -32,10 +35,16 @@ class Imgur extends ControllerBase {
 	}
 	
 	public function index(){return [];}
+	
 	/**
-	 * @post("imgur/login")
+	 * @route("imgur/login", "methods" => ["post","get"])
 	 */
 	public function login(){
+		$isPost = false;
+		if(isset($_POST)) $isPost = true;
+		
+		
+		
 		$response = ['type' => 'redirect', 'data' => $this->oauthURI.'/authorize/?client_id='.$this->clientID.'&response_type=code&state=initializing'];
 		echo json_encode($response);
 	}

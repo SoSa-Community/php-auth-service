@@ -16,21 +16,25 @@ class Registration extends ControllerBase{
 	 * @post("register")
 	 */
 	public function register(){
-		$response = ['status' => 'failure', 'error' => 'unknown error'];
+		$responseData = null;
+		$status = 'failure';
+		$error = new \Error('Unknown Error', 1);
 		
-		$username = $_POST['username'] ?? null;
-		$email = $_POST['email'] ?? null;
-		$password = $_POST['password'] ?? null;
+		$request = $_POST;
+		
+		$username = $request['username'] ?? null;
+		$email = $request['email'] ?? null;
+		$password = $request['password'] ?? null;
 		
 		
 		if(empty($username)){
-			$response['error'] = 'Please provide a username';
-		}
-		else if(empty($password)){
-			$response['error'] = 'Please provide a password';
+			$error = new \Error('Please provide a username');
 		}
 		else if(empty($email)){
-			$response['error'] = 'Please provide an e-mail address';
+			$error = new \Error('Please provide an e-mail address');
+		}
+		else if(empty($password)){
+			$error = new \Error('Please provide a password');
 		}
 		else{
 			try{
@@ -38,7 +42,7 @@ class Registration extends ControllerBase{
 				$existingUser = DAO::getOne(User::class, 'username = ? OR email_hash = ?', false, [$username, $emailHash]);
 				
 				if(!empty($existingUser)) {
-					$response['error'] = 'a user with that username or e-mail address already exists';
+					$error = new \Error('a user with that username or e-mail address already exists');
 				}else{
 					
 					$user = new User();
@@ -47,18 +51,31 @@ class Registration extends ControllerBase{
 					$user->setEmailHash($emailHash);
 					
 					if(DAO::save($user)){
-						unset($user->_rest['password']);
-						unset($response['error']);
+						$responseData = ['user' => $user->getPublicOutput()];
+						$status = 'success';
+						$error = null;
 						
-						$response['status'] = 'success';
-						$response['user'] = $user->_rest;
+						if(isset($request['login']) && $request['login'] == true){
+							
+							try{
+								list($session, $device) = $this->createSession($user, $request);
+								
+								$responseData['session'] = $session->getPublicOutput();
+								$responseData['device_id'] = $device->getId();
+								
+							}catch(\Exception $e){
+								$status = 'failure';
+								$error = new \Error($e->getMessage(), $e->getCode());
+							}
+						}
 						
 					}
 				}
 			}catch (DAOException $exception){
-			
+				$error = new \Error('Unknown Error', 2);
 			}
 		}
-		echo json_encode($response);
+		
+		echo $this::generateResponse($status, $responseData, $error);
 	}
 }

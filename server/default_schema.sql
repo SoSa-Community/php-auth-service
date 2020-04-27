@@ -28,7 +28,7 @@ CREATE TABLE `password_reset` (
     ON UPDATE NO ACTION
 );
 
-CREATE TABLE `main`.`provider_user` (
+CREATE TABLE `provider_user` (
   `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `provider` VARCHAR(45) NULL,
   `unique_id` VARCHAR(255) NOT NULL,
@@ -42,24 +42,26 @@ CREATE TABLE `main`.`provider_user` (
   INDEX `provider_user_unique` (`provider` ASC, `unique_id` ASC, `user_id` ASC)
 );
 
-CREATE TABLE `main`.`sessions` (
+CREATE TABLE `sessions` (
   `id` VARCHAR(100) NOT NULL,
   `user_id` BIGINT(20) UNSIGNED NULL,
-  `device_id` VARCHAR(255) NULL DEFAULT NULL,
+  `device_id` VARCHAR(150) NULL DEFAULT NULL,
   `refresh_token` VARCHAR(100) NULL,
+  `expiry` DATETIME NOT NULL,
   `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`));
 
-CREATE TABLE `main`.`devices` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` varchar(100) DEFAULT NOT NULL,
+CREATE TABLE `devices` (
+  `id` VARCHAR(150) NOT NULL,
+  `name` VARCHAR(100) NOT NULL,
   `user_id` BIGINT(20) UNSIGNED NOT NULL,
   `push_service` ENUM('android','ios','other') DEFAULT 'other',
   `push_service_token` longtext,
   `platform` ENUM('android','ios','other')  DEFAULT 'other',
   `extra` longtext,
-  `secret` varchar(32) DEFAULT NOT NULL,
+  `secret` varchar(32) NOT NULL,
   `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `updated` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`));
+  PRIMARY KEY (`id`)
+);
