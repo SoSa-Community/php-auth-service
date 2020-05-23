@@ -2,9 +2,10 @@
     "require": {
         "php": "^7.4",
         "twig\/twig": "^2.0",
-        "phpmv\/ubiquity": "2.3.3",
+        "phpmv\/ubiquity": "2.3.7",
         "phpmv\/php-mv-ui": "2.3.2",
-        "firebase/php-jwt": "^5.2"
+        "firebase/php-jwt": "^5.2",
+        "blocktrail/cryptojs-aes-php": "^0.1.0"
     },
     "require-dev": {
         "monolog\/monolog": "^1.24",

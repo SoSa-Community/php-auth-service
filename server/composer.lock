@@ -4,8 +4,44 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6ef551fc74a2c55e02417d4c57e121cd",
+    "content-hash": "3178da4cae16ade60d729c941d98bc13",
     "packages": [
+        {
+            "name": "blocktrail/cryptojs-aes-php",
+            "version": "v0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/blocktrail/cryptojs-aes-php.git",
+                "reference": "c114ebf0b5c080ca3e5f857de30d5be74fa01cbe"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/blocktrail/cryptojs-aes-php/zipball/c114ebf0b5c080ca3e5f857de30d5be74fa01cbe",
+                "reference": "c114ebf0b5c080ca3e5f857de30d5be74fa01cbe",
+                "shasum": ""
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Blocktrail\\CryptoJSAES\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ruben de Vries",
+                    "email": "ruben@rubensayshi.com"
+                }
+            ],
+            "description": "Small openssl_encrypt/decrypt wrapper to be compatible with CryptoJS.AES",
+            "time": "2015-08-07T15:55:15+00:00"
+        },
         {
             "name": "firebase/php-jwt",
             "version": "v5.2.0",
@@ -143,20 +179,20 @@
         },
         {
             "name": "phpmv/ubiquity",
-            "version": "2.3.3",
+            "version": "2.3.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpMv/ubiquity.git",
-                "reference": "90803962e2b63e64306f65a39d294595845ca339"
+                "reference": "0e9031a291d8dfd1abab8a853f8d57188a6b495d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpMv/ubiquity/zipball/90803962e2b63e64306f65a39d294595845ca339",
-                "reference": "90803962e2b63e64306f65a39d294595845ca339",
+                "url": "https://api.github.com/repos/phpMv/ubiquity/zipball/0e9031a291d8dfd1abab8a853f8d57188a6b495d",
+                "reference": "0e9031a291d8dfd1abab8a853f8d57188a6b495d",
                 "shasum": ""
             },
             "require": {
-                "php": ">7.0"
+                "php": "^7.4"
             },
             "require-dev": {
                 "phpmv/php-mv-ui": "^2.2",
@@ -193,7 +229,7 @@
                 "orm",
                 "php"
             ],
-            "time": "2020-01-25T15:54:58+00:00"
+            "time": "2020-04-30T02:20:35+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -537,16 +573,16 @@
         },
         {
             "name": "phpmv/ubiquity-dev",
-            "version": "0.0.7",
+            "version": "0.0.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpMv/ubiquity-dev.git",
-                "reference": "6801f836ac24432de3cb4ae8ea30ff0bce14b59e"
+                "reference": "25de67d65afd80a106a0334c0f55f3eb87d38015"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpMv/ubiquity-dev/zipball/6801f836ac24432de3cb4ae8ea30ff0bce14b59e",
-                "reference": "6801f836ac24432de3cb4ae8ea30ff0bce14b59e",
+                "url": "https://api.github.com/repos/phpMv/ubiquity-dev/zipball/25de67d65afd80a106a0334c0f55f3eb87d38015",
+                "reference": "25de67d65afd80a106a0334c0f55f3eb87d38015",
                 "shasum": ""
             },
             "require": {
@@ -583,7 +619,7 @@
                 "php-framework",
                 "tools"
             ],
-            "time": "2020-04-12T13:38:24+00:00"
+            "time": "2020-04-25T01:14:53+00:00"
         },
         {
             "name": "psr/log",

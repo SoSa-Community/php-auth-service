@@ -89,7 +89,8 @@ class Forgot extends ControllerBase{
 				if(!empty($reset)){
 					$reset->generateAndSetTransient();
 					
-					if(DAO::save($reset)){
+					$ret = DAO::save($reset);
+					if($ret){
 						$error = null;
 						$status = 'success';
 						
@@ -97,10 +98,12 @@ class Forgot extends ControllerBase{
 						
 						if($usingPin) $responseData['token'] = $reset->getToken();
 					}else{
+						error_log($ret);
 						$error = new \Error('System error, please contact administrator');
 					}
 				}
 			}catch (DAOException $exception){
+				error_log($exception->getMessage());
 				$error = new \Error('System error, please contact administrator');
 			}
 		}else{
