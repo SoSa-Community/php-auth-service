@@ -44,7 +44,7 @@ class Devices extends ControllerBase{
 						if(!empty($user)){
 							$error = null;
 							
-							$session = Session::generateNewSession($user->getId(), $deviceId);
+							$session = Session::generateNewSession($user->getId(), $deviceId, true);
 							
 							$status = 'success';
 							$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];

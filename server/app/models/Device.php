@@ -113,9 +113,6 @@ class Device{
 	}
 	
 	public function validateAndDecodeToken($token){
-		/* TODO: Decide how tokens will be validated */
-		return $this->getId() === $token;
-		
 		JWT::$leeway = 60;
 		
 		$token = JWT::decode($token, $this->secret, array('HS256'));

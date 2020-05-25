@@ -104,7 +104,7 @@ abstract class ControllerBase extends Controller{
 						/** if a refresh token is passed, we should generate a new session even if the current one hasn't expired **/
 						if($refreshToken === $session->getRefreshToken()){
 							DAO::remove($session);
-							$session = Session::generateNewSession($user->getId(), (!empty($device) ? $device->getId() : null));
+							$session = Session::generateNewSession($user->getId(), (!empty($device) ? $device->getId() : null), $session->getVerified());
 							$sessionRefreshed = true;
 						}
 						else if(!$session->hasExpired()){
@@ -128,10 +128,7 @@ abstract class ControllerBase extends Controller{
 		}
 	}
 	
-	public function createSession($user, $request){
-		
-		$deviceId = $request['device_id'] ?? null;
-		$deviceToken = $request['device_token'] ?? null;
+	public function createSession($user, $request, $verifySession=false){
 		
 		$deviceName = $request['device_name'] ?? null;
 		$devicePlatform = $request['device_platform'] ?? null;
@@ -150,7 +147,7 @@ abstract class ControllerBase extends Controller{
 			}
 		}
 		
-		$session = Session::generateNewSession($user->getId(), $device->getId());
+		$session = Session::generateNewSession($user->getId(), $device->getId(), $verifySession);
 		
 		$_REQUEST['_user'] = $user;
 		$_REQUEST['_device'] = $device;

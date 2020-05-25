@@ -58,7 +58,7 @@ class Registration extends ControllerBase{
 						if(isset($request['login']) && $request['login'] == true){
 							
 							try{
-								list($session, $device) = $this->createSession($user, $request);
+								list($session, $device) = $this->createSession($user, $request, true);
 								
 								$responseData['session'] = $session->getPublicOutput();
 								$responseData['device_id'] = $device->getId();

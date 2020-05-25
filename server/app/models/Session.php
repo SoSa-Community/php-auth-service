@@ -39,7 +39,7 @@ class Session{
 	
 	private string $created = '';
 	private string $updated = '';
-	
+	private $verified = false;
 	
 	public function getId(){return $this->id;}
 	public function setId($id){$this->id = $id;}
@@ -68,6 +68,16 @@ class Session{
 	
 	public function getUpdated(){return $this->updated;}
 	public function setUpdated($updated){$this->updated = $updated;}
+	
+	public function getVerified(){
+		return boolval($this->verified);
+	}
+	
+	public function setVerified($verified){
+		$this->verified = boolval($verified);
+	}
+	
+	
 	
 	public static function generateId(){
 		return substr(bin2hex(random_bytes(100)), 0, intval(Startup::$config['sessionIdSize']));
@@ -118,7 +128,7 @@ class Session{
 		return true;
 	}
 	
-	public static function generateNewSession($userId=null, $deviceId=null){
+	public static function generateNewSession($userId=null, $deviceId=null, $verified=false){
 		if(!empty($userId)){
 			
 			if(!empty($deviceId)){
@@ -141,6 +151,7 @@ class Session{
 				$session->generateAndSetRefreshToken();
 				$session->setUserId($userId);
 				$session->setDeviceId($deviceId);
+				$session->setVerified($verified);
 			}
 			
 			$session->generateAndSetExpiry();

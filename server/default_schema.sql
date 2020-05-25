@@ -28,6 +28,14 @@ CREATE TABLE `password_reset` (
     ON UPDATE NO ACTION
 );
 
+CREATE TABLE `main`.`preauth` (
+  `id` VARCHAR(150) NOT NULL,
+  `device_name` VARCHAR(100) NULL,
+  `device_platform` ENUM('android', 'ios', 'other') NULL,
+  `device_secret` VARCHAR(32) NULL,
+  `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`));
+
 CREATE TABLE `provider_user` (
   `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `provider` VARCHAR(45) NULL,
@@ -50,6 +58,7 @@ CREATE TABLE `sessions` (
   `expiry` DATETIME NOT NULL,
   `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `updated` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `verified` INT(1) NULL DEFAULT 0
   PRIMARY KEY (`id`));
 
 CREATE TABLE `devices` (

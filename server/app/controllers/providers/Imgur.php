@@ -2,6 +2,8 @@
 namespace controllers\providers;
 
 use \controllers\ControllerBase;
+use models\Device;
+use models\Preauth;
 use models\ProviderUser;
 use models\User;
 use Ubiquity\orm\DAO;
@@ -37,64 +39,84 @@ class Imgur extends ControllerBase {
 	public function index(){return [];}
 	
 	/**
-	 * @route("imgur/login", "methods" => ["post","get"])
+	 * @get("imgur/login")
 	 */
 	public function login(){
-		$isPost = false;
-		if(isset($_POST)) $isPost = true;
 		
+		$_SESSION['app'] = ($_GET['app'] ? true : false);
 		
+		if(!empty($_GET['preauth'])){
+			$preauth = DAO::getOne(Preauth::class, 'id = ?', false, [$_GET['preauth']]);
+			if(!empty($preauth)){
+				$_SESSION['preauth'] = $preauth;
+				header('Location: '. $this->oauthURI.'/authorize/?client_id='.$this->clientID.'&response_type=code&state=initializing');
+			}else{
+				die('Invalid preauth');
+			}
+		}else{
+			die('No preauth provided');
+		}
+	}
+	
+	/**
+	 * @get("imgur/app_login")
+	 */
+	public function appLogin(){
 		
-		$response = ['type' => 'redirect', 'data' => $this->oauthURI.'/authorize/?client_id='.$this->clientID.'&response_type=code&state=initializing'];
-		echo json_encode($response);
+		return $this->login();
 	}
 	
 	/**
 	 * @get("imgur/complete")
 	 */
 	public function complete(){
-		$response = ['status' => 'failure', 'error' => 'Unknown error'];
-		
-		if(isset($_GET['code']) && !empty($_GET['code'])){
-			try{
-				$tokens = $this->getAccessTokens($_GET['code']);
-				if(!empty($tokens)){
-					$providerUser = DAO::getOne(ProviderUser::class, 'provider = ? AND unique_id = ?', false, [$this->provider, $tokens['account_id']]);
-					$user = null;
-					
-					if(!empty($providerUser)){
-						if(!empty($providerUser->getUserId())){
-							$user = DAO::getById(User::class, $providerUser->getUserId());
-						}
-					}else{
-						$providerUser = new ProviderUser();
-						$providerUser->setProvider($this->provider);
-					}
-					
-					$providerUser->setFromJSON($tokens);
-					
-					if($user === null){
-						$user = new User();
-						$user->setUsername($tokens['account_username']);
+		if(!empty($_SESSION['preauth'])){
+			
+			if(isset($_GET['code']) && !empty($_GET['code'])){
+				try{
+					$tokens = $this->getAccessTokens($_GET['code']);
+					if(!empty($tokens)){
+						$providerUser = DAO::getOne(ProviderUser::class, 'provider = ? AND unique_id = ?', false, [$this->provider, $tokens['account_id']]);
+						$user = null;
 						
-						if(!DAO::save($user)){
-							throw new \Exception('Failed to save user account');
+						if(!empty($providerUser)){
+							if(!empty($providerUser->getUserId())){
+								$user = DAO::getById(User::class, $providerUser->getUserId());
+							}
+						}else{
+							$providerUser = new ProviderUser();
+							$providerUser->setProvider($this->provider);
+						}
+						
+						$providerUser->setFromJSON($tokens);
+						
+						if($user === null){
+							$user = new User();
+							$user->setUsername($tokens['account_username']);
+							
+							if(!DAO::save($user)){
+								throw new \Exception('Failed to save user account');
+							}
+						}
+						
+						$providerUser->setUserId($user->getId());
+						if(DAO::save($providerUser)){
+							$preauth = $_SESSION['preauth'];
+							$device = Device::registerDevice($user->getId(), $preauth->getDeviceSecret(), $preauth->getDeviceName(), $preauth->getDevicePlatform());
+							
+							if($_SESSION['app']){
+								header('Location: sosa://login/preauth/success/'.$device->getId());
+							}
 						}
 					}
-				 
-					$providerUser->setUserId($user->getId());
-					if(DAO::save($providerUser)){
-						unset($response['error']);
-						
-						$response['status'] = 'success';
-						$response['data'] = $user->getPublicOutput();
-					}
+				}catch(\Exception $e){
+					die($e->getCode() . ' - ' . $e->getMessage());
 				}
-			}catch(\Exception $e){
-				$response['error'] = $e->getCode() . ' - ' . $e->getMessage();
 			}
+			
+		}else{
+			die('Invalid preauth');
 		}
-		echo json_encode($response);
 	}
 	
 	/***
