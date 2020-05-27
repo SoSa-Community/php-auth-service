@@ -1,20 +1,14 @@
 <?php
 namespace controllers\providers;
 
-use \controllers\ControllerBase;
-use models\Device;
-use models\Preauth;
-use models\ProviderUser;
-use models\User;
-use Ubiquity\orm\DAO;
 use Ubiquity\controllers\Startup;
 
 /**
  * Reddit Provider
  **/
-class Reddit extends ControllerBase {
-
-	private $provider = 'reddit';
+class Reddit extends PreauthControllerBase {
+	
+	protected $provider = 'reddit';
 	private $clientID = '';
 	private $secret = '';
 
@@ -27,6 +21,8 @@ class Reddit extends ControllerBase {
 	private $scopes = '';
 	
 	public function __construct(){
+		parent::__construct();
+		
 		$this->setupProviderConfig();
 	}
 	
@@ -49,19 +45,11 @@ class Reddit extends ControllerBase {
 	 * @get("reddit/login")
 	 */
 	public function login(){
-		
-		$_SESSION['app'] = ($_GET['app'] ? true : false);
-		
-		if(!empty($_GET['preauth'])){
-			$preauth = DAO::getOne(Preauth::class, 'id = ?', false, [$_GET['preauth']]);
-			if(!empty($preauth)){
-				$_SESSION['preauth'] = $preauth;
-				header('Location: '. $this->oauthAuthorizeURI . '?response_type=code&client_id='.$this->clientID.'&redirect_uri='.$this->redirectURI.'&scope='.$this->scopes.'&state='.rand());
-			}else{
-				die('Invalid preauth');
-			}
-		}else{
-			die('No preauth provided');
+		try{
+			$this->loginSetup();
+			header('Location: '. $this->oauthAuthorizeURI . '?response_type=code&client_id='.$this->clientID.'&redirect_uri='.$this->redirectURI.'&scope='.$this->scopes.'&state='.rand());
+		}catch (\Exception $e){
+			$this->handlePreauthResponse('failure', ['error' => $e->getMessage()]);
 		}
 	}
 	
@@ -69,61 +57,38 @@ class Reddit extends ControllerBase {
 	 * @get("reddit/complete")
 	 */
 	public function complete(){
+		$responseData = [];
+		$error = new \Error('Invalid Request');
 		
-		if(!empty($_SESSION['preauth'])){
-			
-			if(isset($_GET['code']) && !empty($_GET['code'])){
-				try{
-					$tokens = $this->getAccessTokens($_GET['code']);
-					if(!empty($tokens)){
-						$userData = $this->getUser($tokens['access_token']);
-						
-						if(!empty($userData)){
-							$providerUser = DAO::getOne(ProviderUser::class, 'provider = ? AND unique_id = ?', false, [$this->provider, $userData['id']]);
-							$user = null;
-							
-							if(!empty($providerUser)){
-								if(!empty($providerUser->getUserId())){
-									$user = DAO::getById(User::class, $providerUser->getUserId());
-								}
-							}else{
-								$providerUser = new ProviderUser();
-								$providerUser->setProvider($this->provider);
-							}
-							
-							$providerUser->setUniqueId($userData['id']);
-							$providerUser->setAccessToken($tokens['access_token']);
-							$providerUser->setAccessTokenExpiry(date('Y-m-j H:i',time() + $tokens['expires_in']));
-							
-							
-							if($user === null){
-								$user = new User();
-								$user->setUsername($userData['name']);
-								
-								if(!DAO::save($user)){
-									throw new \Exception('Failed to save user account');
-								}
-							}
-							
-							$providerUser->setUserId($user->getId());
-							if(DAO::save($providerUser)){
-								$preauth = $_SESSION['preauth'];
-								$device = Device::registerDevice($user->getId(), $preauth->getDeviceSecret(), $preauth->getDeviceName(), $preauth->getDevicePlatform());
-								
-								if($_SESSION['app']){
-									header('Location: sosa://login/preauth/success/'.$device->getId());
-								}
-							}
+		if(isset($_GET['code']) && !empty($_GET['code'])){
+			try{
+				$tokens = $this->getAccessTokens($_GET['code']);
+				if(!empty($tokens) && $tokens['access_token']){
+					$userData = $this->getUser($tokens['access_token']);
+					if(!empty($userData)){
+						try{
+							$responseData = $this->completePreauth($tokens['access_token'], '', $tokens['expires_in'], $userData['id'], $userData['name']);
+							$error = null;
+						}catch (\Exception $e){
+							$error = $e;
 						}
+					}else{
+						$error = new \Error('Could not get user data from '.ucfirst($this->provider));
 					}
-				}catch(\Exception $e){
-					die($e->getCode() . ' - ' . $e->getMessage());
+				}else{
+					$error = new \Error(ucfirst($this->provider) . ' denied access');
 				}
+			}catch(\Exception $e){
+				$error = new \Error('Something went wrong, please contact the administrator');
 			}
-			
-		}else{
-			die('Invalid preauth');
 		}
+		
+		if(!empty($error)){
+			$this->handlePreauthResponse('failure', ['error' => $error->getMessage()]);
+		}else{
+			$this->handlePreauthResponse('success', $responseData);
+		}
+		
 	}
 	
 	/***
@@ -156,46 +121,27 @@ class Reddit extends ControllerBase {
 	 * Fires a request to an endpoint and returns json_decoded data
 	 *
 	 * @param String $endpoint
-	 * @param array $options
+	 * @param array $postData
 	 * @param bool $post
 	 * @param String $accessToken
 	 * @return array
 	 * @throws \Exception
 	 */
-	private function request(string $endpoint, array $options=[], bool $post=false, string $accessToken=''){
+	private function request(string $endpoint, array $postData=[], bool $post=false, string $accessToken=''){
 		
 		$headers = [];
 		
 		$ch = curl_init($endpoint);
 		
-		$curlOptions[CURLOPT_CONNECTTIMEOUT] = 60;
-		$curlOptions[CURLOPT_DNS_CACHE_TIMEOUT] = 25;
-		$curlOptions[CURLOPT_TIMEOUT] = 60;
-		
-		$curlOptions[CURLOPT_RETURNTRANSFER] = 1;
-		$curlOptions[CURLOPT_FOLLOWLOCATION] = 1;
-		$curlOptions[CURLOPT_USERAGENT] = $_SERVER['HTTP_USER_AGENT'];
+		$curlOptions = $this->getRequestDefaults($postData, $post);
 		
 		if(!empty($accessToken)){
-			$headers[] = "Authorization: bearer " . $accessToken;
-			$curlOptions[CURLOPT_HEADER] = 0;
-			$curlOptions[CURLINFO_HEADER_OUT] = 0;
-			
-			
+			$curlOptions[CURLOPT_HTTPHEADER] = "Authorization: bearer " . $accessToken;
 		}else{
 			$curlOptions[CURLOPT_HTTPAUTH] = CURLAUTH_BASIC;
 			$curlOptions[CURLOPT_USERPWD] = $this->clientID . ":" . $this->secret;
-			$curlOptions[CURLOPT_SSLVERSION] = 4;
-			$curlOptions[CURLOPT_SSL_VERIFYPEER] = false;
-			$curlOptions[CURLOPT_SSL_VERIFYHOST] = 2;
 		}
 		
-		$curlOptions[CURLOPT_HTTPHEADER] = $headers;
-		
-		if (!empty($options) && $post){
-			$curlOptions[CURLOPT_CUSTOMREQUEST] = 'POST';
-			$curlOptions[CURLOPT_POSTFIELDS] = $options;
-		}
 		curl_setopt_array($ch, $curlOptions);
 		
 		$data = curl_exec($ch);

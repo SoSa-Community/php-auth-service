@@ -22,7 +22,7 @@ class Devices extends ControllerBase{
 		
 		$responseData = null;
 		$status = 'failure';
-		$error = new \Error('Invalid token', 1);
+		$error = new \Error('Invalid device token', 1);
 		
 		$request = $_POST;
 		

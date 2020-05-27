@@ -1,20 +1,14 @@
 <?php
 namespace controllers\providers;
 
-use \controllers\ControllerBase;
-use models\Device;
-use models\Preauth;
-use models\ProviderUser;
-use models\User;
-use Ubiquity\orm\DAO;
 use Ubiquity\controllers\Startup;
 
 /**
  * Imgur Provider
  **/
-class Imgur extends ControllerBase {
+class Imgur extends PreauthControllerBase {
 
-	private $provider = 'imgur';
+	protected $provider = 'imgur';
 	private $clientID = '';
 	private $secret = '';
 	private $mashapeAuth = '';
@@ -23,6 +17,7 @@ class Imgur extends ControllerBase {
 	
 	
 	public function __construct(){
+		parent::__construct();
 		$this->setupProviderConfig();
 	}
 	
@@ -43,18 +38,11 @@ class Imgur extends ControllerBase {
 	 */
 	public function login(){
 		
-		$_SESSION['app'] = ($_GET['app'] ? true : false);
-		
-		if(!empty($_GET['preauth'])){
-			$preauth = DAO::getOne(Preauth::class, 'id = ?', false, [$_GET['preauth']]);
-			if(!empty($preauth)){
-				$_SESSION['preauth'] = $preauth;
-				header('Location: '. $this->oauthURI.'/authorize/?client_id='.$this->clientID.'&response_type=code&state=initializing');
-			}else{
-				die('Invalid preauth');
-			}
-		}else{
-			die('No preauth provided');
+		try{
+			$this->loginSetup();
+			header('Location: '. $this->oauthURI.'/authorize/?client_id='.$this->clientID.'&response_type=code&state=initializing');
+		}catch (\Exception $e){
+			$this->handlePreauthResponse('failure', ['error' => $e->getMessage()]);
 		}
 	}
 	
@@ -62,52 +50,31 @@ class Imgur extends ControllerBase {
 	 * @get("imgur/complete")
 	 */
 	public function complete(){
-		if(!empty($_SESSION['preauth'])){
-			
-			if(isset($_GET['code']) && !empty($_GET['code'])){
-				try{
-					$tokens = $this->getAccessTokens($_GET['code']);
-					if(!empty($tokens)){
-						$providerUser = DAO::getOne(ProviderUser::class, 'provider = ? AND unique_id = ?', false, [$this->provider, $tokens['account_id']]);
-						$user = null;
-						
-						if(!empty($providerUser)){
-							if(!empty($providerUser->getUserId())){
-								$user = DAO::getById(User::class, $providerUser->getUserId());
-							}
-						}else{
-							$providerUser = new ProviderUser();
-							$providerUser->setProvider($this->provider);
-						}
-						
-						$providerUser->setFromJSON($tokens);
-						
-						if($user === null){
-							$user = new User();
-							$user->setUsername($tokens['account_username']);
-							
-							if(!DAO::save($user)){
-								throw new \Exception('Failed to save user account');
-							}
-						}
-						
-						$providerUser->setUserId($user->getId());
-						if(DAO::save($providerUser)){
-							$preauth = $_SESSION['preauth'];
-							$device = Device::registerDevice($user->getId(), $preauth->getDeviceSecret(), $preauth->getDeviceName(), $preauth->getDevicePlatform());
-							
-							if($_SESSION['app']){
-								header('Location: sosa://login/preauth/success/'.$device->getId());
-							}
-						}
+		$responseData = [];
+		$error = new \Error('Invalid Request');
+		
+		if(isset($_GET['code']) && !empty($_GET['code'])){
+			try{
+				$tokens = $this->getAccessTokens($_GET['code']);
+				if(!empty($tokens) && $tokens['access_token']){
+					try{
+						$responseData = $this->completePreauth($tokens['access_token'], '', $tokens['expires_in'], $tokens['account_id'], $tokens['account_username']);
+						$error = null;
+					}catch (\Exception $e){
+						$error = $e;
 					}
-				}catch(\Exception $e){
-					die($e->getCode() . ' - ' . $e->getMessage());
+				}else{
+					$error = new \Error('Could not get user data from '.ucfirst($this->provider));
 				}
+			}catch(\Exception $e){
+				die($e->getCode() . ' - ' . $e->getMessage());
 			}
-			
+		}
+		
+		if(!empty($error)){
+			$this->handlePreauthResponse('failure', ['error' => $error->getMessage()]);
 		}else{
-			die('Invalid preauth');
+			$this->handlePreauthResponse('success', $responseData);
 		}
 	}
 	
@@ -152,25 +119,17 @@ class Imgur extends ControllerBase {
 	 * @return array
 	 * @throws \Exception
 	 */
-	private function request(string $endpoint, array $options=[], bool $post=false, string $accessToken=''){
+	private function request(string $endpoint, array $postData=[], bool $post=false, string $accessToken=''){
 		
 		$headers = (empty($accessToken)) ? array('Authorization: CLIENT-ID ' . $this->clientID) : array("Authorization: Bearer " . $accessToken);
 		if(!empty($this->mashapeAuth))  $headers[] = "X-Mashape-Authorization: ".$this->mashapeAuth;
 		
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, $endpoint);
+		$ch = curl_init($endpoint);
 		
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);
-		curl_setopt($ch, CURLOPT_DNS_CACHE_TIMEOUT, 25);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+		$curlOptions = $this->getRequestDefaults($postData, $post);
+		$curlOptions[CURLOPT_HTTPHEADER] = $headers;
 		
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, ($post) ? 'POST' : 'GET');
-		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-		curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
-		
-		if (!empty($options) && $post) curl_setopt($ch, CURLOPT_POSTFIELDS, $options);
+		curl_setopt_array($ch, $curlOptions);
 		
 		$data = curl_exec($ch);
 		curl_close($ch);
