@@ -10,7 +10,7 @@ use Ubiquity\orm\DAO;
 use Ubiquity\controllers\Startup;
 
 /**
- * Imgur Controller
+ * Imgur Provider
  **/
 class Imgur extends ControllerBase {
 
@@ -56,14 +56,6 @@ class Imgur extends ControllerBase {
 		}else{
 			die('No preauth provided');
 		}
-	}
-	
-	/**
-	 * @get("imgur/app_login")
-	 */
-	public function appLogin(){
-		
-		return $this->login();
 	}
 	
 	/**
@@ -176,6 +168,7 @@ class Imgur extends ControllerBase {
 		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, ($post) ? 'POST' : 'GET');
 		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+		curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
 		
 		if (!empty($options) && $post) curl_setopt($ch, CURLOPT_POSTFIELDS, $options);
 		
