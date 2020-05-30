@@ -17,7 +17,7 @@ abstract class PreauthControllerBase extends \Ubiquity\controllers\ControllerBas
 	
 	protected $provider = '';
 	
-	public function loginSetup(){
+	public function setup(){
 		$_SESSION['app'] = ($_GET['app'] ? true : false);
 		if(!empty($_GET['preauth'])){
 			$preauth = DAO::getOne(Preauth::class, 'id = ?', false, [$_GET['preauth']]);
@@ -39,11 +39,19 @@ abstract class PreauthControllerBase extends \Ubiquity\controllers\ControllerBas
 			$providerUser = DAO::getOne(ProviderUser::class, 'provider = ? AND unique_id = ?', false, [$this->provider, $userId]);
 			$user = null;
 			
-			if (!empty($providerUser)) {
-				if (!empty($providerUser->getUserId())) {
-					$user = DAO::getById(User::class, $providerUser->getUserId());
+			
+			if (!empty($providerUser) && !empty($providerUser->getUserId())) {
+				$user = DAO::getById(User::class, $providerUser->getUserId());
+				if(empty($user)){
+					DAO::remove($providerUser);
+					$providerUser = null;
 				}
-			} else {
+			}
+			
+			if(empty($providerUser)){
+				if($_SESSION['for_login']){
+					throw new \Exception('Account not found');
+				}
 				$providerUser = new ProviderUser();
 				$providerUser->setProvider($this->provider);
 			}
@@ -51,6 +59,7 @@ abstract class PreauthControllerBase extends \Ubiquity\controllers\ControllerBas
 			$providerUser->setUniqueId($userId);
 			$providerUser->setAccessToken($accessToken);
 			$providerUser->setAccessTokenExpiry(date('Y-m-j H:i', time() + intval($expiresIn)));
+			
 			
 			
 			if ($user === null) {

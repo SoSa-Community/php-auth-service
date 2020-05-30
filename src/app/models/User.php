@@ -56,7 +56,8 @@ class User{
 	public function getPublicOutput(){
 		return array(
 				"id" => $this->id,
-				"username" => $this->username
+				"username" => $this->username,
+				"nickname" => $this->username
 		);
 	}
 	

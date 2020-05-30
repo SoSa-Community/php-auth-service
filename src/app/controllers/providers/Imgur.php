@@ -4,25 +4,20 @@ namespace controllers\providers;
 use Ubiquity\controllers\Startup;
 
 /**
- * Reddit Provider
+ * Imgur Provider
  **/
-class Reddit extends PreauthControllerBase {
-	
-	protected $provider = 'reddit';
+class Imgur extends PreauthControllerBase {
+
+	protected $provider = 'imgur';
 	private $clientID = '';
 	private $secret = '';
-
+	private $mashapeAuth = '';
 	private $apiURI = '';
 	private $oauthURI = '';
-	private $oauthAuthorizeURI = '';
-	private $oauthTokenURI = '';
-	private $redirectURI = '';
 	
-	private $scopes = '';
 	
 	public function __construct(){
 		parent::__construct();
-		
 		$this->setupProviderConfig();
 	}
 	
@@ -31,30 +26,41 @@ class Reddit extends PreauthControllerBase {
 		
 		$this->clientID = $providerConfig['clientID'];
 		$this->secret = $providerConfig['secret'];
+		$this->mashapeAuth = $providerConfig['mashapeAuth'];
 		$this->apiURI = $providerConfig['apiURI'];
 		$this->oauthURI = $providerConfig['oauthURI'];
-		$this->oauthAuthorizeURI = $providerConfig['oauthAuthorizeURI'];
-		$this->oauthTokenURI = $providerConfig['oauthTokenURI'];
-		$this->redirectURI = $providerConfig['redirectURI'];
-		$this->scopes = $providerConfig['scopes'];
 	}
 	
 	public function index(){return [];}
 	
 	/**
-	 * @get("reddit/login")
+	 * @get("imgur/login")
 	 */
 	public function login(){
+		$_SESSION['for_login'] = true;
+		$this->loginRegister();
+	}
+	
+	/**
+	 * @get("imgur/register")
+	 */
+	public function register(){
+		$_SESSION['for_login'] = false;
+		$this->loginRegister();
+	}
+	
+	private function loginRegister(){
+		
 		try{
-			$this->loginSetup();
-			header('Location: '. $this->oauthAuthorizeURI . '?response_type=code&client_id='.$this->clientID.'&redirect_uri='.$this->redirectURI.'&scope='.$this->scopes.'&state='.rand());
+			$this->setup();
+			header('Location: '. $this->oauthURI.'/authorize/?client_id='.$this->clientID.'&response_type=code&state=initializing');
 		}catch (\Exception $e){
 			$this->handlePreauthResponse('failure', ['error' => $e->getMessage()]);
 		}
 	}
 	
 	/**
-	 * @get("reddit/complete")
+	 * @get("imgur/complete")
 	 */
 	public function complete(){
 		$responseData = [];
@@ -64,22 +70,17 @@ class Reddit extends PreauthControllerBase {
 			try{
 				$tokens = $this->getAccessTokens($_GET['code']);
 				if(!empty($tokens) && $tokens['access_token']){
-					$userData = $this->getUser($tokens['access_token']);
-					if(!empty($userData)){
-						try{
-							$responseData = $this->completePreauth($tokens['access_token'], '', $tokens['expires_in'], $userData['id'], $userData['name']);
-							$error = null;
-						}catch (\Exception $e){
-							$error = $e;
-						}
-					}else{
-						$error = new \Error('Could not get user data from '.ucfirst($this->provider));
+					try{
+						$responseData = $this->completePreauth($tokens['access_token'], '', $tokens['expires_in'], $tokens['account_id'], $tokens['account_username']);
+						$error = null;
+					}catch (\Exception $e){
+						$error = $e;
 					}
 				}else{
-					$error = new \Error(ucfirst($this->provider) . ' denied access');
+					$error = new \Error('Could not get user data from '.ucfirst($this->provider));
 				}
 			}catch(\Exception $e){
-				$error = new \Error('Something went wrong, please contact the administrator');
+				die($e->getCode() . ' - ' . $e->getMessage());
 			}
 		}
 		
@@ -88,7 +89,6 @@ class Reddit extends PreauthControllerBase {
 		}else{
 			$this->handlePreauthResponse('success', $responseData);
 		}
-		
 	}
 	
 	/***
@@ -99,29 +99,34 @@ class Reddit extends PreauthControllerBase {
 	 * @throws \Exception
 	 */
 	private function getAccessTokens(string $accessCode=''){
-		return ($accessCode) ? $this->request($this->oauthTokenURI, [
-				'redirect_uri' => $this->redirectURI,
+		return ($accessCode) ? $this->request($this->oauthURI . "/token/", [
 				'client_id' => $this->clientID,
+				'client_secret' => $this->secret,
 				'grant_type' => 'authorization_code',
 				'code' => $accessCode], true) : null;
 	}
 	
 	/***
-	 * Retrieves the user data for the provided accessToken
+	 * Retrieves the user data and access tokens for the provided refreshToken
 	 *
-	 * @param string $accessToken
+	 * @param string $refreshToken
 	 * @return mixed|null
 	 * @throws \Exception
 	 */
-	private function getUser(string $accessToken=''){
-		return ($accessToken) ? $this->request($this->oauthURI . '/api/v1/me', [], false, $accessToken) : null;
+	private function getRefreshTokens(string $refreshToken=''){
+		return ($refreshToken) ? $this->request($this->oauthURI . "/token/", [
+				'client_id' => $this->clientID,
+				'client_secret' => $this->secret,
+				'grant_type' => 'refresh_token',
+				'refresh_token' => $refreshToken
+		], true) : null;
 	}
 	
 	/***
 	 * Fires a request to an endpoint and returns json_decoded data
 	 *
 	 * @param String $endpoint
-	 * @param array $postData
+	 * @param array $options
 	 * @param bool $post
 	 * @param String $accessToken
 	 * @return array
@@ -129,18 +134,13 @@ class Reddit extends PreauthControllerBase {
 	 */
 	private function request(string $endpoint, array $postData=[], bool $post=false, string $accessToken=''){
 		
-		$headers = [];
+		$headers = (empty($accessToken)) ? array('Authorization: CLIENT-ID ' . $this->clientID) : array("Authorization: Bearer " . $accessToken);
+		if(!empty($this->mashapeAuth))  $headers[] = "X-Mashape-Authorization: ".$this->mashapeAuth;
 		
 		$ch = curl_init($endpoint);
 		
 		$curlOptions = $this->getRequestDefaults($postData, $post);
-		
-		if(!empty($accessToken)){
-			$curlOptions[CURLOPT_HTTPHEADER] = "Authorization: bearer " . $accessToken;
-		}else{
-			$curlOptions[CURLOPT_HTTPAUTH] = CURLAUTH_BASIC;
-			$curlOptions[CURLOPT_USERPWD] = $this->clientID . ":" . $this->secret;
-		}
+		$curlOptions[CURLOPT_HTTPHEADER] = $headers;
 		
 		curl_setopt_array($ch, $curlOptions);
 		

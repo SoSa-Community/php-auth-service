@@ -28,11 +28,18 @@ class Index extends ControllerBase{
 	 * @get("validate")
 	 */
 	public function validate(){
-		$loggedIn = false;
+		$response = ['logged_in' => false];
 		if(isset($_REQUEST['_user']) && !empty($_REQUEST['_user'])){
-			$loggedIn = true;
+			$response['logged_in'] = true;
+			$response['user'] = $_REQUEST['_user']->getPublicOutput();
+			if($_REQUEST['_sessionRefreshed']){
+				$response['session'] = $response['_session'];
+			}
+			echo $this::generateResponse('success', $response, null);
+		}else{
+			echo $this::generateResponse('failure', $response, new \Error('Session invalid'));
 		}
-		echo $this::generateResponse('success', ['logged_in' => $loggedIn], null);
+		
 	}
 	
 	/**
