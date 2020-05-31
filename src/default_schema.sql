@@ -28,7 +28,7 @@ CREATE TABLE `password_reset` (
     ON UPDATE NO ACTION
 );
 
-CREATE TABLE `main`.`preauth` (
+CREATE TABLE `preauth` (
   `id` VARCHAR(150) NOT NULL,
   `device_name` VARCHAR(100) NULL,
   `device_platform` ENUM('android', 'ios', 'other') NULL,
@@ -58,7 +58,7 @@ CREATE TABLE `sessions` (
   `expiry` DATETIME NOT NULL,
   `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `updated` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `verified` INT(1) NULL DEFAULT 0
+  `verified` INT(1) NULL DEFAULT 0,
   PRIMARY KEY (`id`));
 
 CREATE TABLE `devices` (
