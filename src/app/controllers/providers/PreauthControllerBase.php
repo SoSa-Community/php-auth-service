@@ -32,13 +32,15 @@ abstract class PreauthControllerBase extends \Ubiquity\controllers\ControllerBas
 		}
 	}
 	
-	public function completePreauth($accessToken, $refreshToken, $expiresIn, $userId, $username){
+	public function completePreauth($accessToken = '', $refreshToken = '', $expiresIn, $userId, $username, $email=null){
 		
 		if(!empty($_SESSION['preAuth'])) {
 			
 			$providerUser = DAO::getOne(ProviderUser::class, 'provider = ? AND unique_id = ?', false, [$this->provider, $userId]);
 			$user = null;
 			
+			echo $accessToken;
+			echo $userId;
 			
 			if (!empty($providerUser) && !empty($providerUser->getUserId())) {
 				$user = DAO::getById(User::class, $providerUser->getUserId());
@@ -58,6 +60,7 @@ abstract class PreauthControllerBase extends \Ubiquity\controllers\ControllerBas
 			
 			$providerUser->setUniqueId($userId);
 			$providerUser->setAccessToken($accessToken);
+			$providerUser->setRefreshToken($refreshToken);
 			$providerUser->setAccessTokenExpiry(date('Y-m-j H:i', time() + intval($expiresIn)));
 			
 			
@@ -68,6 +71,11 @@ abstract class PreauthControllerBase extends \Ubiquity\controllers\ControllerBas
 				$existingUser =  DAO::getOne(User::class, 'username = ?', false, [$username]);
 				if(!empty($existingUser)) $username = null;
 				$user->setUsername($username);
+				
+				if(!empty($email)){
+					$emailHash = User::generateEmailHash($email);
+					$user->setEmailHash($emailHash);
+				}
 				
 				if (!DAO::save($user)) {
 					throw new \Exception('Failed to save user account');
