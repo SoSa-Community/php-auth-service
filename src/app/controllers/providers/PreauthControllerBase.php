@@ -1,6 +1,7 @@
 <?php
 namespace controllers\providers;
 
+use controllers\ControllerBase;
 use models\Device;
 use models\Preauth;
 use models\ProviderUser;
@@ -13,7 +14,7 @@ use Ubiquity\orm\DAO;
 /**
  * ControllerBase.
  **/
-abstract class PreauthControllerBase extends \Ubiquity\controllers\ControllerBase {
+abstract class PreauthControllerBase extends ControllerBase {
 	
 	protected $provider = '';
 	

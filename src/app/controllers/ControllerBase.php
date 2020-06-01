@@ -14,7 +14,7 @@ use Ubiquity\utils\http\UResponse;
 /**
  * ControllerBase.
  **/
-abstract class ControllerBase extends Controller{
+abstract class ControllerBase extends Controller {
 	
 	public function initialize() {
 		UResponse::asJSON();
