@@ -19,7 +19,13 @@ abstract class PreauthControllerBase extends ControllerBase {
 	protected $provider = '';
 	
 	public function setup(){
-		$_SESSION['app'] = ($_GET['app'] ? true : false);
+		
+		if(isset($_GET['app'])){
+			$_SESSION['app'] = boolval($_GET['app']);
+		}else{
+			$_SESSION['app'] = false;
+		}
+		
 		if(!empty($_GET['preauth'])){
 			$preauth = DAO::getOne(Preauth::class, 'id = ?', false, [$_GET['preauth']]);
 			if(!empty($preauth)){
@@ -35,7 +41,7 @@ abstract class PreauthControllerBase extends ControllerBase {
 	
 	public function completePreauth($accessToken = '', $refreshToken = '', $expiresIn, $userId, $username, $email=null){
 		
-		if(!empty($_SESSION['preAuth'])) {
+		if(isset($_SESSION['preAuth']) && !empty($_SESSION['preAuth'])) {
 			
 			$providerUser = DAO::getOne(ProviderUser::class, 'provider = ? AND unique_id = ?', false, [$this->provider, $userId]);
 			$user = null;
