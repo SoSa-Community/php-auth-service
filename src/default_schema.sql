@@ -8,6 +8,7 @@ CREATE TABLE `user` (
   `username` VARCHAR(100) NOT NULL,
   `password` VARCHAR(255) NOT NULL,
   `email_hash` VARCHAR(32) NULL,
+  `bot_id` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
   `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `modified` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -53,6 +54,7 @@ CREATE TABLE `provider_user` (
 CREATE TABLE `sessions` (
   `id` VARCHAR(100) NOT NULL,
   `user_id` BIGINT(20) UNSIGNED NULL,
+  `bot_id` BIGINT(20) UNSIGNED NULL,
   `device_id` VARCHAR(150) NULL DEFAULT NULL,
   `refresh_token` VARCHAR(100) NULL,
   `expiry` DATETIME NOT NULL,
@@ -69,6 +71,17 @@ CREATE TABLE `devices` (
   `push_service_token` longtext,
   `platform` ENUM('android','ios','other')  DEFAULT 'other',
   `extra` longtext,
+  `secret` varchar(32) NOT NULL,
+  `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE `bots` (
+  `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
+  `unique_id` VARCHAR(150) NOT NULL,
+  `owner_id` BIGINT(20) UNSIGNED NOT NULL,
   `secret` varchar(32) NOT NULL,
   `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `updated` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

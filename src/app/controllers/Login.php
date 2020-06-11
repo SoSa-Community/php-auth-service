@@ -59,7 +59,7 @@ class Login extends ControllerBase{
 		if($userVerified && !empty($user)){
 			try{
 				//
-				list($session, $device) = $this->createSession($user, $request, true);
+				list($session, $device) = $this->createSessionFromRequest($user, $request, true);
 				
 				$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
 				$responseData['device_id'] = $device->getId();

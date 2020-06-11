@@ -14,6 +14,11 @@ class User{
 	private $password = '';
 	
 	/**
+	 * @column("name"=>"bot_id")
+	 */
+	private $botId = null;
+	
+	/**
 	 * @column("name"=>"email_hash")
 	 */
 	private $emailHash = '';
@@ -36,6 +41,9 @@ class User{
 	public function getId(){return $this->id;}
 	public function setId($id){$this->id = $id;}
 	
+	public function getBotId(){return $this->botId;}
+	public function setBotId($id){$this->botId = $id;}
+	
 	public function getUsername(){return $this->username;}
 	public function setUsername($username){$this->username = $username;}
 	
@@ -48,6 +56,10 @@ class User{
 	
 	public function getEmailHash(){return $this->emailHash;}
 	public function setEmailHash($hash){$this->emailHash = $hash;}
+
+	public function isBot(){
+		return !empty($this->botId);
+	}
 	
 	/**
 	 * Returns an array of elements for public consumption
@@ -57,7 +69,8 @@ class User{
 		return array(
 				"id" => $this->id,
 				"username" => $this->username,
-				"nickname" => $this->username
+				"nickname" => $this->username,
+				"is_bot" => $this->isBot()
 		);
 	}
 	

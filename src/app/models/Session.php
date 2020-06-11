@@ -20,6 +20,11 @@ class Session{
 	private int $userId = 0;
 	
 	/**
+	 * @column("name"=>"bot_id")
+	 */
+	private int $botId = 0;
+	
+	/**
 	 * @column("name"=>"device_id")
 	 */
 	private ?string $deviceId = '';
@@ -46,6 +51,9 @@ class Session{
 	
 	public function getUserId(){return $this->userId;}
 	public function setUserId($userId){$this->userId = $userId;}
+	
+	public function getBotId(){return $this->botId;}
+	public function setBotId($botId){$this->botId = $botId;}
 	
 	public function getDeviceId(){return $this->deviceId;}
 	public function setDeviceId($deviceId){$this->deviceId = $deviceId;}
@@ -128,30 +136,33 @@ class Session{
 		return true;
 	}
 	
-	public static function generateNewSession($userId=null, $deviceId=null, $verified=false){
-		if(!empty($userId)){
-			
-			if(!empty($deviceId)){
-				$session = DAO::getOne(Session::class, 'device_id=?', false, [$deviceId]);
-				if(!empty($session)){
-					if($session->hasExpired()){
-						DAO::remove($session);
-						unset($session);
-					}else{
-						if(!$session->shouldUpdateExpiry()){
-							return $session;
-						}
-					}
+	public static function getSession($id, $idType='device_id'){
+		$session = DAO::getOne(Session::class, $idType.'=?', false, [$id]);
+		if(!empty($session)){
+			if($session->hasExpired()){
+				DAO::remove($session);
+				unset($session);
+			}else{
+				if(!$session->shouldUpdateExpiry()){
+					return $session;
 				}
 			}
+		}
+	}
+	
+	public static function generateNewSession($userId=null, $deviceId=null,  $verified=false){
+		if(!empty($userId)){
+			
+			$session = Session::getSession($deviceId);
 			
 			if(!isset($session) || empty($session)){
 				$session = new self();
 				$session->generateAndSetId();
 				$session->generateAndSetRefreshToken();
 				$session->setUserId($userId);
-				$session->setDeviceId($deviceId);
+				
 				$session->setVerified($verified);
+				$session->setDeviceId($deviceId);
 			}
 			
 			$session->generateAndSetExpiry();

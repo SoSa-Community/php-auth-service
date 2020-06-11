@@ -4,6 +4,7 @@ use Blocktrail\CryptoJSAES\CryptoJSAES;
 use Firebase\JWT\JWT;
 use models\Device;
 use models\Session;
+use models\Bot;
 use models\User;
 use Ubiquity\orm\DAO;
 
@@ -58,30 +59,59 @@ class Index extends ControllerBase{
 			if(!empty($decrypted)){
 				$tokenData = json_decode($decrypted, true);
 				
-				if(isset($tokenData['device_id']) && isset($tokenData['token'])){
-					$device = DAO::getOne(Device::class, 'id = ?', false, [$tokenData['device_id']]);
+				if(isset($tokenData['token'])){
 					
-					if(!empty($device)){
-					
-						try{
-							$token = JWT::decode($tokenData['token'], $device->getSecret(), array('HS256'));
-							
-							$session = DAO::getOne(Session::class, 'id=? AND device_id=?', false, [$token->id, $device->getId()]);
-							if(!empty($session)){
-								if(!$session->hasExpired()){
-									
-									$user = DAO::getOne(User::class, 'id = ?', false, [$session->getUserId()]);
-									if(!empty($user)) {
+					if(isset($tokenData['bot_id'])){
+						$bot = DAO::getOne(Bot::class, 'unique_id = ?', false, [$tokenData['bot_id']]);
+						
+						if(!empty($bot)){
+							try{
+								$tokenData = $bot->validateAndDecodeToken($tokenData['token']);
+								if(!empty($tokenData)){
+									$user = $bot->getUser();
+									if(!empty($user)){
+										$session = Session::generateNewSession($user->getId(), $bot->getUniqueId(), true);
+										$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
+										
 										$error = null;
 										$status = 'success';
-										$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
 									}
+									
 								}
+							}catch(\Exception $e){
+								$error = new \Error('Token corrupted', 4);
 							}
-						}catch (\Exception $e){
-						
+							
 						}
 					}
+					elseif(isset($tokenData['device_id'])){
+						
+						$device = DAO::getOne(Device::class, 'id = ?', false, [$tokenData['device_id']]);
+						if(!empty($device)){
+							
+							try{
+								$token = JWT::decode($tokenData['token'], $device->getSecret(), array('HS256'));
+								
+								$session = DAO::getOne(Session::class, 'id=? AND device_id=?', false, [$token->id, $device->getId()]);
+								if(!empty($session)){
+									if(!$session->hasExpired()){
+										
+										$user = DAO::getOne(User::class, 'id = ?', false, [$session->getUserId()]);
+										if(!empty($user)) {
+											$error = null;
+											$status = 'success';
+											$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
+										}
+									}
+								}
+							}catch (\Exception $e){
+							
+							}
+						}
+					}else{
+						$error = new \Error('Server to server connection broken');
+					}
+					
 				}else{
 					$error = new \Error('Server to server connection broken');
 				}
@@ -93,5 +123,30 @@ class Index extends ControllerBase{
 		echo $this::generateResponse($status, $responseData, $error);
 		
 		
+	}
+	
+	/**
+	 * @get("generate_bots")
+	 */
+	
+	public function generateBots(){
+		for($x=1;$x<=250;$x++){
+			
+			$bot = new Bot();
+			
+			$bot->generateAndSetUniqueId();
+			$bot->generateAndSetSecret();
+			$bot->setOwnerId(1);
+			$bot->setName('Bot'.$x);
+			
+			if(DAO::save($bot)){
+				$user = new User();
+				$user->setUsername('Bot'. $x);
+				$user->setBotId($bot->getId());
+				DAO::save($user);
+			}
+			
+			
+		}
 	}
 }
