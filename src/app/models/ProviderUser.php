@@ -28,6 +28,11 @@ class ProviderUser{
 	private $accessToken = '';
 	
 	/**
+	 * @column("name"=>"access_token_secret")
+	 */
+	private $accessTokenSecret = '';
+	
+	/**
 	 * @column("name"=>"refresh_token")
 	 */
 	private $refreshToken = '';
@@ -53,6 +58,9 @@ class ProviderUser{
 	
 	public function getAccessToken(){return $this->accessToken;}
 	public function setAccessToken($accessToken){$this->accessToken = $accessToken;}
+	
+	public function getAccessTokenSecret(){return $this->accessTokenSecret;}
+	public function setAccessTokenSecret($accessTokenSecret){$this->accessTokenSecret = $accessTokenSecret;}
 	
 	public function getRefreshToken(){return $this->refreshToken;}
 	public function setRefreshToken($refreshToken){$this->refreshToken = $refreshToken;}

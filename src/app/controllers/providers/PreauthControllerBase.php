@@ -39,15 +39,14 @@ abstract class PreauthControllerBase extends ControllerBase {
 		}
 	}
 	
-	public function completePreauth($accessToken = '', $refreshToken = '', $expiresIn, $userId, $username, $email=null){
+	public function completePreauth($accessToken = '', $accessTokenSecret = '', $refreshToken = '', $expiresIn, $userId, $username, $email=null){
 		
 		if(isset($_SESSION['preAuth']) && !empty($_SESSION['preAuth'])) {
-			
 			$providerUser = DAO::getOne(ProviderUser::class, 'provider = ? AND unique_id = ?', false, [$this->provider, $userId]);
 			$user = null;
 			
-			echo $accessToken;
-			echo $userId;
+			$expiresIn = intval($expiresIn);
+			if(empty($expiresIn))   $expiresIn = 3600;
 			
 			if (!empty($providerUser) && !empty($providerUser->getUserId())) {
 				$user = DAO::getById(User::class, $providerUser->getUserId());
@@ -67,6 +66,7 @@ abstract class PreauthControllerBase extends ControllerBase {
 			
 			$providerUser->setUniqueId($userId);
 			$providerUser->setAccessToken($accessToken);
+			$providerUser->setAccessTokenSecret($accessTokenSecret);
 			$providerUser->setRefreshToken($refreshToken);
 			$providerUser->setAccessTokenExpiry(date('Y-m-j H:i', time() + intval($expiresIn)));
 			
@@ -95,7 +95,7 @@ abstract class PreauthControllerBase extends ControllerBase {
 				$device = Device::registerDevice($user->getId(), $preAuth->getDeviceSecret(), $preAuth->getDeviceName(), $preAuth->getDevicePlatform());
 				return ['device_id' => $device->getId()];
 			} else {
-				throw new \Exception('Error saving user');
+				throw new \Exception('Error saving provider user');
 			}
 		}else{
 			throw new \Exception('Invalid Request');

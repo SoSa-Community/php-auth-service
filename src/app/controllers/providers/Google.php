@@ -87,7 +87,7 @@ class Google extends PreauthControllerBase {
 							
 							if($verifiedEmail && $userData['email'])    $email = $userData['email'];
 							
-							$responseData = $this->completePreauth($tokens['access_token'], $tokens['refresh_token'] ?? '', $tokens['expires_in'], $userData['id'], $userData['name'], $email);
+							$responseData = $this->completePreauth($tokens['access_token'], null, $tokens['refresh_token'] ?? null, $tokens['expires_in'], $userData['id'], $userData['name'], $email);
 							$error = null;
 						}catch (\Exception $e){
 							$error = $e;

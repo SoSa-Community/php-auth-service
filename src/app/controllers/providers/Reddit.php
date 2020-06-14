@@ -81,7 +81,7 @@ class Reddit extends PreauthControllerBase {
 					$userData = $this->getUser($tokens['access_token']);
 					if(!empty($userData)){
 						try{
-							$responseData = $this->completePreauth($tokens['access_token'], '', $tokens['expires_in'], $userData['id'], $userData['name']);
+							$responseData = $this->completePreauth($tokens['access_token'], null, null, $tokens['expires_in'], $userData['id'], $userData['name']);
 							$error = null;
 						}catch (\Exception $e){
 							$error = $e;

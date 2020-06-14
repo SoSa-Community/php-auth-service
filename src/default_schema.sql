@@ -43,6 +43,7 @@ CREATE TABLE `provider_user` (
   `unique_id` VARCHAR(255) NOT NULL,
   `user_id` BIGINT(20) UNSIGNED NOT NULL,
   `access_token` VARCHAR(255) NULL,
+  `access_token_secret` VARCHAR(255) NULL,
   `refresh_token` VARCHAR(255) NULL,
   `access_token_expiry` DATETIME NULL,
   `created` DATETIME NULL,
