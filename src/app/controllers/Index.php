@@ -34,7 +34,7 @@ class Index extends ControllerBase{
 			$response['logged_in'] = true;
 			$response['user'] = $_REQUEST['_user']->getPublicOutput();
 			if($_REQUEST['_sessionRefreshed']){
-				$response['session'] = $response['_session'];
+				$response['session'] = $_REQUEST['_session'];
 			}
 			echo $this::generateResponse('success', $response, null);
 		}else{
