@@ -18,12 +18,11 @@ abstract class ControllerBase extends Controller {
 	
 	public function initialize() {
 		UResponse::asJSON();
-		
 		/*  We want to allow both POST bodies and JSON bodies in a unified way
 			so we check to see if the content type header is application/json
 			and then we merge the JSON body with the $_POST variable
 		*/
-		if($_SERVER['REQUEST_METHOD'] === 'POST' && strstr($_SERVER['CONTENT_TYPE'],'application/json') !== -1) {
+		if($_SERVER['REQUEST_METHOD'] === 'POST' && strstr($_SERVER['CONTENT_TYPE'],'application/json')) {
 			$request = json_decode(trim(file_get_contents("php://input")), true);
 			$_POST = array_merge($_POST, $request);
 		}
