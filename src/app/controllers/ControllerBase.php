@@ -18,6 +18,7 @@ abstract class ControllerBase extends Controller {
 	
 	public function initialize() {
 		UResponse::asJSON();
+		
 		/*  We want to allow both POST bodies and JSON bodies in a unified way
 			so we check to see if the content type header is application/json
 			and then we merge the JSON body with the $_POST variable

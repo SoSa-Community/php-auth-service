@@ -2,6 +2,7 @@
 namespace controllers;
 
 use models\User;
+use Ubiquity\controllers\Startup;
 use Ubiquity\exceptions\DAOException;
 use Ubiquity\orm\DAO;
 
@@ -22,24 +23,28 @@ class Registration extends ControllerBase{
 		
 		$request = $_POST;
 		
-		$username = $request['username'] ?? null;
-		$email = $request['email'] ?? null;
-		$password = $request['password'] ?? null;
+		$username = trim($request['username']) ?? null;
+		$email = trim($request['email']) ?? null;
+		$password = trim($request['password']) ?? null;
+		$usernameLength = !empty($username) ? strlen($username) : 0;
 		
-		
-		if(empty($username)){
-			$error = new \Error('Please provide a username');
+		if($usernameLength < Startup::$config['usernameMinLength'] || $usernameLength > Startup::$config['usernameMaxLength']){
+			$error = new \Error('Username must be between '.Startup::$config['usernameMinLength'].' and '. Startup::$config['usernameMaxLength'] . ' characters');
 		}
 		else if(empty($email)){
-			$error = new \Error('Please provide an e-mail address');
+			$error = new \Error('Please provide an e-mail address or register using a social account');
 		}
-		else if(empty($password)){
-			$error = new \Error('Please provide a password');
+		else if(empty($password) || strlen($password) < Startup::$config['passwordMinLength']){
+			$error = new \Error('Password must be at least '.Startup::$config['passwordMinLength'].' characters long');
+		}
+		else if(preg_replace(Startup::$config['usernameReplaceRegex'],'', $username) !== $username){
+			$error = new \Error('Username can only contain the characters a-z, 0-9, "-" and "_"');
 		}
 		else{
+			
 			try{
 				$emailHash = User::generateEmailHash($email);
-				$existingUser = DAO::getOne(User::class, 'username = ? OR email_hash = ?', false, [$username, $emailHash]);
+				$existingUser = DAO::getOne(User::class, 'username LIKE ? OR email_hash LIKE ?', false, [$username, $emailHash]);
 				
 				if(!empty($existingUser)) {
 					$error = new \Error('a user with that username or e-mail address already exists');
