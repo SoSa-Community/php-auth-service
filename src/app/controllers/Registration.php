@@ -2,6 +2,7 @@
 namespace controllers;
 
 use models\User;
+use providers\WhoisProvider;
 use Ubiquity\controllers\Startup;
 use Ubiquity\exceptions\DAOException;
 use Ubiquity\orm\DAO;
@@ -31,7 +32,7 @@ class Registration extends ControllerBase{
 		if($usernameLength < Startup::$config['usernameMinLength'] || $usernameLength > Startup::$config['usernameMaxLength']){
 			$error = new \Error('Username must be between '.Startup::$config['usernameMinLength'].' and '. Startup::$config['usernameMaxLength'] . ' characters');
 		}
-		else if(empty($email)){
+		else if(empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)){
 			$error = new \Error('Please provide an e-mail address or register using a social account');
 		}
 		else if(empty($password) || strlen($password) < Startup::$config['passwordMinLength']){
@@ -41,43 +42,49 @@ class Registration extends ControllerBase{
 			$error = new \Error('Username can only contain the characters a-z, 0-9, "-" and "_"');
 		}
 		else{
+			$emailSplit = explode('@', $email);
+			$emailWhois = WhoisProvider::retrieve($emailSplit[1]);
 			
-			try{
-				$emailHash = User::generateEmailHash($email);
-				$existingUser = DAO::getOne(User::class, 'username LIKE ? OR email_hash LIKE ?', false, [$username, $emailHash]);
-				
-				if(!empty($existingUser)) {
-					$error = new \Error('a user with that username or e-mail address already exists');
-				}else{
+			if(empty($emailWhois) || !$emailWhois->getExists()){
+				$error = new \Error('The e-mail you provided is invalid');
+			}else{
+				try{
+					$emailHash = User::generateEmailHash($email);
+					$existingUser = DAO::getOne(User::class, 'username LIKE ? OR email_hash LIKE ?', false, [$username, $emailHash]);
 					
-					$user = new User();
-					$user->setUsername($username);
-					$user->hashPasswordAndSet($password);
-					$user->setEmailHash($emailHash);
-					
-					if(DAO::save($user)){
-						$responseData = ['user' => $user->getPublicOutput()];
-						$status = 'success';
-						$error = null;
+					if(!empty($existingUser)) {
+						$error = new \Error('a user with that username or e-mail address already exists');
+					}else{
 						
-						if(isset($request['login']) && $request['login'] == true){
+						$user = new User();
+						$user->setUsername($username);
+						$user->hashPasswordAndSet($password);
+						$user->setEmailHash($emailHash);
+						
+						if(DAO::save($user)){
+							$responseData = ['user' => $user->getPublicOutput()];
+							$status = 'success';
+							$error = null;
 							
-							try{
-								list($session, $device) = $this->createSessionFromRequest($user, $request, true);
+							if(isset($request['login']) && $request['login'] == true){
 								
-								$responseData['session'] = $session->getPublicOutput();
-								$responseData['device_id'] = $device->getId();
-								
-							}catch(\Exception $e){
-								$status = 'failure';
-								$error = new \Error($e->getMessage(), $e->getCode());
+								try{
+									list($session, $device) = $this->createSessionFromRequest($user, $request, true);
+									
+									$responseData['session'] = $session->getPublicOutput();
+									$responseData['device_id'] = $device->getId();
+									
+								}catch(\Exception $e){
+									$status = 'failure';
+									$error = new \Error($e->getMessage(), $e->getCode());
+								}
 							}
+							
 						}
-						
 					}
+				}catch (DAOException $exception){
+					$error = new \Error('Unknown Error', 2);
 				}
-			}catch (DAOException $exception){
-				$error = new \Error('Unknown Error', 2);
 			}
 		}
 		
