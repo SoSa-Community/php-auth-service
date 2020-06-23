@@ -5,7 +5,8 @@
         "phpmv\/ubiquity": "2.3.9",
         "phpmv\/php-mv-ui": "2.3.2",
         "firebase/php-jwt": "^5.2",
-        "blocktrail/cryptojs-aes-php": "^0.1.0"
+        "blocktrail/cryptojs-aes-php": "^0.1.0",
+        "phpmailer/phpmailer": "^6.1"
     },
     "require-dev": {
         "monolog\/monolog": "^1.24",
