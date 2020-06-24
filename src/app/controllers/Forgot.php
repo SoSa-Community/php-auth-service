@@ -3,6 +3,7 @@ namespace controllers;
 
 use models\PasswordReset;
 use models\User;
+use providers\EmailProvider;
 use Ubiquity\exceptions\DAOException;
 use Ubiquity\orm\DAO;
 
@@ -41,8 +42,20 @@ class Forgot extends ControllerBase{
 					$reset->generateAndSetPin($emailHash);
 				
 					if(DAO::save($reset)){
-						$status = 'success';
-						$error = null;
+						try{
+							$username = $user->getUsername();
+							$pinSplit = explode('-', $reset->getPin());
+							
+							$emailBody = EmailProvider::renderTemplate('forgot_password', ['username' => $username, 'pin' => $pinSplit[0]]);
+							EmailProvider::send($email, $username, 'Did you forget something?', $emailBody);
+							
+							$status = 'success';
+							$error = null;
+						}catch (\Exception $e){
+							error_log('Forgot Password e-mail went wrong', $e->getMessage());
+							$error = new \Error('Problem sending you your pin, please contact the administrator');
+						}
+						
 					}else{
 						$error = new \Error('System error, please contact administrator');
 					}
