@@ -7,6 +7,7 @@ use models\Preauth;
 use models\ProviderUser;
 
 use models\User;
+use providers\EmailProvider;
 use Ubiquity\orm\DAO;
 
 
@@ -82,6 +83,9 @@ abstract class PreauthControllerBase extends ControllerBase {
 				if(!empty($email)){
 					$emailHash = User::generateEmailHash($email);
 					$user->setEmailHash($emailHash);
+					
+					$emailBody = EmailProvider::renderTemplate('registration', ['username' => $username]);
+					EmailProvider::send($email, $username, 'Welcome To SoSa', $emailBody);
 				}
 				
 				if (!DAO::save($user)) {

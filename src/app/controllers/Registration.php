@@ -2,6 +2,7 @@
 namespace controllers;
 
 use models\User;
+use providers\EmailProvider;
 use providers\WhoisProvider;
 use Ubiquity\controllers\Startup;
 use Ubiquity\exceptions\DAOException;
@@ -79,6 +80,9 @@ class Registration extends ControllerBase{
 									$error = new \Error($e->getMessage(), $e->getCode());
 								}
 							}
+							
+							$emailBody = EmailProvider::renderTemplate('registration', ['username' => $username]);
+							EmailProvider::send($email, $username, 'Welcome To SoSa', $emailBody);
 							
 						}
 					}

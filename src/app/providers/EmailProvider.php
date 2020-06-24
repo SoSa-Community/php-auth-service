@@ -7,6 +7,14 @@ use Ubiquity\controllers\Startup;
 
 class EmailProvider{
 	
+	
+	public static function renderTemplate($templateName='', $replace=[]){
+		$loader = new \Twig\Loader\FilesystemLoader($_SERVER['DOCUMENT_ROOT'].'/app/views/mail');
+		$twig = new \Twig\Environment($loader, ['cache' => false]);
+		$template = $twig->load($templateName.'.html');
+		return $template->render($replace);
+	}
+	
 	/**
 	 * Sends an e-mail, on failure will throw and exception
 	 *
