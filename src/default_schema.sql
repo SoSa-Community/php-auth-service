@@ -5,14 +5,14 @@ USE `main`;
 
 CREATE TABLE `user` (
   `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `username` VARCHAR(100) NOT NULL,
+  `username` VARCHAR(100) NULL DEFAULT NULL,
   `password` VARCHAR(255) NOT NULL,
   `email_hash` VARCHAR(32) NULL,
   `bot_id` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
   `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `modified` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `username_unqiue` (`username` ASC)
+  INDEX `username_index` (`username` ASC)
 );
 
 CREATE TABLE `password_reset` (
