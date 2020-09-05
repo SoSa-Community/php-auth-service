@@ -8,6 +8,7 @@ use models\ProviderUser;
 
 use models\User;
 use providers\EmailProvider;
+use Ubiquity\controllers\Startup;
 use Ubiquity\orm\DAO;
 
 
@@ -109,11 +110,12 @@ abstract class PreauthControllerBase extends ControllerBase {
 	
 	public function handlePreauthResponse($status='failure', $returnData = []){
 		$returnData['status'] = $status;
+		$route = $_SESSION['for_login'] ? 'login' : 'register';
 		
 		if($_SESSION['app']){
-			header('Location: sosa://login/preauth/'.base64_encode(json_encode($returnData)));
+			header('Location: sosa://'.$route.'/preauth/'.base64_encode(json_encode($returnData)));
 		}else{
-			header('Location: https://sosa.net/preauth/'.$status.'/'.implode('/', $returnData));
+			header('Location: '.Startup::$config['websiteURI'].'/preauth/'.$route.'/'.$status.'/'.base64_encode(json_encode($returnData)));
 		}
 	}
 	
