@@ -18,7 +18,7 @@ class Whois{
 	private string $data = '';
 	private int $exists = 0;
 	private string $created = '';
-	private string $updated = '';
+	private string $modified = '';
 	
 	public function getId(){return $this->id;}
 	public function setId($id){$this->id = $id;}
@@ -35,6 +35,6 @@ class Whois{
 	public function getCreated(){return $this->created;}
 	public function setCreated($created){$this->created = $created;}
 	
-	public function getUpdated(){return $this->updated;}
-	public function setUpdated($updated){$this->updated = $updated;}
+	public function getModified(){return $this->modified;}
+	public function setModified($modified){$this->modified = $modified;}
 }
