@@ -1,10 +1,7 @@
 <?php
 namespace controllers;
 
-use models\Device;
-use models\Session;
 use models\User;
-use Ubiquity\controllers\Startup;
 use Ubiquity\exceptions\DAOException;
 use Ubiquity\orm\DAO;
 
@@ -58,7 +55,6 @@ class Login extends ControllerBase{
 		
 		if($userVerified && !empty($user)){
 			try{
-				//
 				list($session, $device) = $this->createSessionFromRequest($user, $request, true);
 				
 				$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
@@ -73,8 +69,4 @@ class Login extends ControllerBase{
 		
 		echo $this::generateResponse($status, $responseData, $error);
 	}
-	
-	
-
-	
 }

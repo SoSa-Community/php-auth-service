@@ -6,6 +6,7 @@ use models\Device;
 use models\Session;
 use models\Bot;
 use models\User;
+use providers\WhoisProvider;
 use Ubiquity\orm\DAO;
 
 
@@ -71,7 +72,7 @@ class Index extends ControllerBase{
 									$user = $bot->getUser();
 									if(!empty($user)){
 										$session = Session::generateNewSession($user->getId(), $bot->getUniqueId(), true);
-										$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
+										$responseData = ['user' => $user->getPublicOutput(true, true), 'session' => $session->getPublicOutput()];
 										
 										$error = null;
 										$status = 'success';
@@ -100,7 +101,10 @@ class Index extends ControllerBase{
 										if(!empty($user)) {
 											$error = null;
 											$status = 'success';
-											$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
+											
+											$user->processGroupsAndPermissions();
+											
+											$responseData = ['user' => $user->getPublicOutput(true, true), 'session' => $session->getPublicOutput()];
 										}
 									}
 								}
@@ -121,32 +125,5 @@ class Index extends ControllerBase{
 		}
 		
 		echo $this::generateResponse($status, $responseData, $error);
-		
-		
-	}
-	
-	/**
-	 * @get("generate_bots")
-	 */
-	
-	public function generateBots(){
-		for($x=1;$x<=250;$x++){
-			
-			$bot = new Bot();
-			
-			$bot->generateAndSetUniqueId();
-			$bot->generateAndSetSecret();
-			$bot->setOwnerId(1);
-			$bot->setName('Bot'.$x);
-			
-			if(DAO::save($bot)){
-				$user = new User();
-				$user->setUsername('Bot'. $x);
-				$user->setBotId($bot->getId());
-				DAO::save($user);
-			}
-			
-			
-		}
 	}
 }

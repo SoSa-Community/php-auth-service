@@ -4,8 +4,6 @@ namespace controllers;
 use models\Device;
 use models\Session;
 use models\User;
-use Ubiquity\controllers\Startup;
-use Ubiquity\exceptions\DAOException;
 use Ubiquity\orm\DAO;
 
 /**
@@ -47,7 +45,7 @@ class Devices extends ControllerBase{
 							$session = Session::generateNewSession($user->getId(), $deviceId, true);
 							
 							$status = 'success';
-							$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
+							$responseData = ['device_id' => $deviceId, 'user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
 						}
 					}
 				}catch(\Exception $e){

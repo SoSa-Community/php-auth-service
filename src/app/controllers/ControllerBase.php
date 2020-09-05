@@ -128,6 +128,13 @@ abstract class ControllerBase extends Controller {
 		}
 	}
 	
+	/***
+	 * @param User $user
+	 * @param array $request
+	 * @param bool $verifySession
+	 * @return array
+	 * @throws \Exception
+	 */
 	public function createSessionFromRequest($user, $request, $verifySession=false){
 		
 		$deviceName = $request['device_name'] ?? null;
@@ -148,12 +155,13 @@ abstract class ControllerBase extends Controller {
 		}
 		
 		$session = Session::generateNewSession($user->getId(), $device->getId(), $verifySession);
+		$user->processGroupsAndPermissions();
 		
 		$_REQUEST['_user'] = $user;
 		$_REQUEST['_device'] = $device;
 		$_REQUEST['_session'] = $session;
 		
-		return [$session, $device];
+		return [$session, $device, $user->permissions];
 	}
 }
 

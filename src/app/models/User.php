@@ -2,6 +2,9 @@
 
 namespace models;
 
+use Ubiquity\exceptions\DAOException;
+use Ubiquity\orm\DAO;
+
 /**
  * @table("name"=>"user")
  **/
@@ -22,6 +25,21 @@ class User{
 	 * @column("name"=>"email_hash")
 	 */
 	private $emailHash = '';
+	
+	/**
+	 * @transient
+	 */
+	public array $permissions = [];
+	
+	/**
+	 * @transient
+	 */
+	public array $roles = [];
+	
+	/**
+	 * @transient
+	 */
+	private bool $permissionsProcessed = false;
 	
 	public function verifyPassword($password){
 		if(password_verify($password, $this->password)){
@@ -63,19 +81,74 @@ class User{
 	
 	/**
 	 * Returns an array of elements for public consumption
+	 * @param bool $sendRoles
+	 * @param bool $sendPermissions
 	 * @return array
 	 */
-	public function getPublicOutput(){
-		return array(
+	public function getPublicOutput($sendRoles=false, $sendPermissions=false){
+		$return = array(
 				"id" => $this->id,
 				"username" => $this->username,
 				"nickname" => $this->username,
 				"is_bot" => $this->isBot()
 		);
+		
+		if($sendRoles) {
+			$return['roles'] = array_map(function($role){
+				return ['id' => $role->getId(), 'name' => $role->getName()];
+			}, $this->roles);
+		}
+		if($sendPermissions) $return['permissions'] = $this->permissions;
+		
+		return $return;
 	}
 	
 	public static function isPasswordValid($password){
 		return !empty($password) && strlen($password) >= 8;
+	}
+	
+	public function hasPermission($permission=''){
+		return (in_array($permission, $this->permissions));
+	}
+
+	public function processGroupsAndPermissions($forceRefresh=false){
+		
+		if(!$this->permissionsProcessed || $forceRefresh){
+			$this->permissionsProcessed = true;
+			
+			$userRoles = DAO::getAll(UserRole::class, 'user_id = ?', false, [$this->id]);
+			if(!empty($userRoles)) {
+				$roleIds = [];
+				foreach($userRoles as $role) $roleIds[] = $role->getRoleId();
+				
+				if(!empty($roleIds)){
+					$params = array_map(function() {return '?';}, $roleIds);
+					
+					$roles = DAO::getAll(Role::class, 'id in ('.implode(',', $params).') AND enabled = 1', false, $roleIds);
+					
+					if(!empty($roles)){
+						$roleIds = [];
+						foreach($roles as $role){
+							$this->roles[$role->getId()] = $role;
+							$roleIds[] = $role->getId();
+						}
+						
+						if(!empty($roleIds)){
+							$params = array_map(function() {return '?';}, $roleIds);
+							
+							$permissions = DAO::getAll(RolePermission::class, 'role_id in ('.implode(',', $params).')', false, $roleIds);
+							if(!empty($permissions)){
+								foreach($permissions as $permission){
+									$this->roles[$permission->getRoleId()]->permissions[] = $permission->getPermissionId();
+									$this->permissions[] = $permission->getPermissionId();
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return [$this->roles, $this->permissions];
 	}
 	
 }

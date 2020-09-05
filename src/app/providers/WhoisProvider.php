@@ -33,9 +33,9 @@ class WhoisProvider{
 					if (DAO::save($whois)) {
 						return $whois;
 					}
-					
 				}
 			}
+			return false;
 			
 		}else {
 			return $existingWhois;
