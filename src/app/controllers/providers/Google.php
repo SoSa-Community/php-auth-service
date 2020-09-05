@@ -87,7 +87,12 @@ class Google extends PreauthControllerBase {
 							
 							if($verifiedEmail && $userData['email'])    $email = $userData['email'];
 							
-							$responseData = $this->completePreauth($tokens['access_token'], null, $tokens['refresh_token'] ?? null, $tokens['expires_in'], $userData['id'], $userData['name'], $email);
+							$username = trim(preg_replace('/[^A-Za-z0-9\-]+/ism', '-', $userData['name']));
+							if(empty($username)){
+								$username = "guser-".$userData['id'];
+							}
+							
+							$responseData = $this->completePreauth($tokens['access_token'], null, $tokens['refresh_token'] ?? null, $tokens['expires_in'], $userData['id'], $username, $email);
 							$error = null;
 						}catch (\Exception $e){
 							$error = $e;
