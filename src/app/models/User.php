@@ -151,12 +151,12 @@ class User{
 		}
 		
 		if (empty($existingUser) || $username !== $existingUser->getUsername()) {
-			$query[] = 'username = ?';
+			$query[] = 'username LIKE ?';
 			$criteria[] = $username;
 		}
 		
 		if ($emailHash !== null && (empty($existingUser) || $emailHash !== $existingUser->getEmailHash())) {
-			$query[] = 'email_hash = ?';
+			$query[] = 'email_hash LIKE ?';
 			$criteria[] = $emailHash;
 		}
 		
@@ -164,10 +164,10 @@ class User{
 			$users = DAO::getAll(User::class, $idCheck . '(' . implode(' OR ', $query) . ')', false, $criteria);
 			if (!empty($users)) {
 				foreach ($users as $user) {
-					if ($user->getUsername() === $username) {
+					if (strtolower($user->getUsername()) == strtolower($username)) {
 						$errors['username'] = new \APIError('Someone with that username already exists', 0, 'username');
 					}
-					if ($user->getEmailHash() === $emailHash) {
+					if (strtolower($user->getEmailHash()) == strtolower($emailHash)) {
 						$errors['email'] = new \APIError('Someone with that e-mail already exists', 0, 'email');
 					}
 					if (isset($errors['username']) && isset($errors['email'])) break;
