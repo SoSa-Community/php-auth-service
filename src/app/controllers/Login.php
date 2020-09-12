@@ -98,8 +98,11 @@ class Login extends ControllerBase{
 			if(!empty($email)) $emailHash = User::generateEmailHash($email);
 			
 			if($existingUser->getUsername() === $username && (!$emailRequired || ($emailHash !== null && $emailHash == $existingUser->getEmailHash()))){
-				$errors = null;
-				$responseData = true;
+				$existingUser->setWelcome(true);
+				if(DAO::save($existingUser)) {
+					$errors = null;
+					$responseData = true;
+				}
 			}else {
 				
 				$usernameValid = false;
