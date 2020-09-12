@@ -47,7 +47,7 @@ abstract class ControllerBase extends Controller {
 					$_REQUEST['_sessionRefreshed'] = $sessionRefreshed;
 				}
 			}catch(\Exception $e){
-				$error = new \Error($e->getMessage(), $e->getCode());
+				$error = new \APIError($e->getMessage(), $e->getCode());
 			}
 		}
 		$_REQUEST['_headers'] = $headers;
@@ -55,17 +55,32 @@ abstract class ControllerBase extends Controller {
 	
 	public function finalize() {}
 	
-	public static function generateResponse(string $status='failure', $data=null, \Throwable $error=null){
+	public static function generateResponse(string $status='failure', $data=null, $error=null){
 		$response = ['status' => $status];
+		$errors = [];
 		
 		if((!empty($data) && !empty($error)) || !empty($data))  $response['response'] = $data;
 		if(!empty($error)){
-			
-			if(is_a($error, '\Throwable')){
-				$error = ['message' => $error->getMessage(), 'code' => $error->getCode()];
+			$errorsToParse = [];
+			if(is_array($error)){
+				$errorsToParse = $error;
+			}else{
+				$errorsToParse = [$error];
 			}
 			
-			$response['error'] = $error;
+			foreach($errorsToParse as $key => $error){
+				if(is_a($error, '\APIError')){
+					$error = $error->forJSON();
+					$errors[] = $error;
+				}
+			}
+			
+			if(!empty($errors)){
+				$response['errors'] = $errors;
+				
+				// Keeping for now so i have time to refactor the chat server
+				$response['error'] = array_pop($errors);
+			}
 		}
 		
 		$sessionRefreshed = $_REQUEST['_sessionRefreshed'] ?? false;

@@ -39,7 +39,7 @@ class Index extends ControllerBase{
 			}
 			echo $this::generateResponse('success', $response, null);
 		}else{
-			echo $this::generateResponse('failure', $response, new \Error('Session invalid'));
+			echo $this::generateResponse('failure', $response, new \APIError('Session invalid'));
 		}
 		
 	}
@@ -50,7 +50,7 @@ class Index extends ControllerBase{
 	public function authenticate(){
 		$responseData = null;
 		$status = 'failure';
-		$error = new \Error('Invalid Token', 1);
+		$error = new \APIError('Invalid Token', 1);
 		
 		$request = $_POST;
 		$token = $request['token'] ?? null;
@@ -80,7 +80,7 @@ class Index extends ControllerBase{
 									
 								}
 							}catch(\Exception $e){
-								$error = new \Error('Token corrupted', 4);
+								$error = new \APIError('Token corrupted', 4);
 							}
 							
 						}
@@ -113,14 +113,14 @@ class Index extends ControllerBase{
 							}
 						}
 					}else{
-						$error = new \Error('Server to server connection broken');
+						$error = new \APIError('Server to server connection broken');
 					}
 					
 				}else{
-					$error = new \Error('Server to server connection broken');
+					$error = new \APIError('Server to server connection broken');
 				}
 			}else{
-				$error = new \Error('Server to server connection broken');
+				$error = new \APIError('Server to server connection broken');
 			}
 		}
 		

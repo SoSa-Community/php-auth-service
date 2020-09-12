@@ -20,7 +20,7 @@ class Devices extends ControllerBase{
 		
 		$responseData = null;
 		$status = 'failure';
-		$error = new \Error('Invalid device token', 1);
+		$error = new \APIError('Invalid device token', 1);
 		
 		$request = $_POST;
 		
@@ -28,9 +28,9 @@ class Devices extends ControllerBase{
 		$deviceId = $request['device_id'] ?? null;
 		
 		if(empty($deviceId)){
-			$error = new \Error('Please provide a device_id', 2);
+			$error = new \APIError('Please provide a device_id', 2);
 		}elseif(empty($token)){
-			$error = new \Error('Please provide a token', 3);
+			$error = new \APIError('Please provide a token', 3);
 		}
 		else{
 			$device = DAO::getOne(Device::class, 'id = ?', false, [$deviceId]);
@@ -49,7 +49,7 @@ class Devices extends ControllerBase{
 						}
 					}
 				}catch(\Exception $e){
-					$error = new \Error('Token corrupted', 4);
+					$error = new \APIError('Token corrupted', 4);
 				}
 				
 			}

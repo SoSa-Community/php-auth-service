@@ -72,7 +72,7 @@ class Google extends PreauthControllerBase {
 	 */
 	public function complete(){
 		$responseData = [];
-		$error = new \Error('Invalid Request');
+		$error = new \APIError('Invalid Request');
 		
 		if(isset($_GET['code']) && !empty($_GET['code'])){
 			try{
@@ -98,13 +98,13 @@ class Google extends PreauthControllerBase {
 							$error = $e;
 						}
 					}else{
-						$error = new \Error('Could not get user data from '.ucfirst($this->provider));
+						$error = new \APIError('Could not get user data from '.ucfirst($this->provider));
 					}
 				}else{
-					$error = new \Error(ucfirst($this->provider) . ' denied access');
+					$error = new \APIError(ucfirst($this->provider) . ' denied access');
 				}
 			}catch(\Exception $e){
-				$error = new \Error($e->getMessage());
+				$error = new \APIError($e->getMessage());
 			}
 		}
 		

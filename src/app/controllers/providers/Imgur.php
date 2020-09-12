@@ -64,7 +64,7 @@ class Imgur extends PreauthControllerBase {
 	 */
 	public function complete(){
 		$responseData = [];
-		$error = new \Error('Invalid Request');
+		$error = new \APIError('Invalid Request');
 		
 		if(isset($_GET['code']) && !empty($_GET['code'])){
 			try{
@@ -77,7 +77,7 @@ class Imgur extends PreauthControllerBase {
 						$error = $e;
 					}
 				}else{
-					$error = new \Error('Could not get user data from '.ucfirst($this->provider));
+					$error = new \APIError('Could not get user data from '.ucfirst($this->provider));
 				}
 			}catch(\Exception $e){
 				die($e->getCode() . ' - ' . $e->getMessage());

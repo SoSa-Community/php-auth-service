@@ -79,7 +79,7 @@ class Twitter extends PreauthControllerBase {
 	 */
 	public function complete(){
 		$responseData = [];
-		$error = new \Error('Invalid Request');
+		$error = new \APIError('Invalid Request');
 		
 		if(isset($_GET['oauth_verifier']) && !empty($_GET['oauth_verifier'])){
 			try{
@@ -100,10 +100,10 @@ class Twitter extends PreauthControllerBase {
 						$error = $e;
 					}
 				}else{
-					$error = new \Error(ucfirst($this->provider) . ' denied access');
+					$error = new \APIError(ucfirst($this->provider) . ' denied access');
 				}
 			}catch(\Exception $e){
-				$error = new \Error($e->getMessage());
+				$error = new \APIError($e->getMessage());
 			}
 		}
 		

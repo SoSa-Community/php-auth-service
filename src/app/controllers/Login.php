@@ -2,6 +2,9 @@
 namespace controllers;
 
 use models\User;
+use \Exception;
+use providers\WhoisProvider;
+use Ubiquity\controllers\Startup;
 use Ubiquity\exceptions\DAOException;
 use Ubiquity\orm\DAO;
 
@@ -19,7 +22,7 @@ class Login extends ControllerBase{
 		
 		$responseData = null;
 		$status = 'failure';
-		$error = new \Error('Incorrect username or password', 1);
+		$error = new \APIError('Incorrect username or password', 1);
 		
 		$request = $_POST;
 		
@@ -32,7 +35,7 @@ class Login extends ControllerBase{
 		if((!empty($username) && !empty($password))){
 			
 			if(empty($username) || empty($password)){
-				$error = new \Error('Username or password must not be empty',2);
+				$error = new \APIError('Username or password must not be empty',2);
 			}else{
 				try{
 					$criteria = [$username];
@@ -48,7 +51,7 @@ class Login extends ControllerBase{
 						if($user->verifyPassword($password))    $userVerified = true;
 					}
 				}catch (DAOException $exception){
-					$error = new \Error('System error, please contact administrator', 3);
+					$error = new \APIError('System error, please contact administrator', 3);
 				}
 			}
 		}
@@ -58,15 +61,18 @@ class Login extends ControllerBase{
 				list($session, $device) = $this->createSessionFromRequest($user, $request, true);
 				
 				$responseData = ['user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
+				
 				$responseData['device_id'] = $device->getId();
 				$status = 'success';
 				$error = null;
 				
 			}catch(\Exception $e){
-				$error = new \Error($e->getMessage(), $e->getCode());
+				$error = new \APIError($e->getMessage(), $e->getCode());
 			}
 		}
 		
 		echo $this::generateResponse($status, $responseData, $error);
 	}
+	
+	
 }

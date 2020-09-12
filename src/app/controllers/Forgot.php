@@ -20,7 +20,7 @@ class Forgot extends ControllerBase{
 	public function forgot(){
 		$responseData = null;
 		$status = 'failure';
-		$error = new \Error('Please provide an e-mail');
+		$error = new \APIError('Please provide an e-mail');
 		
 		$email = $_POST['email'] ?? null;
 		
@@ -53,17 +53,17 @@ class Forgot extends ControllerBase{
 							$error = null;
 						}catch (\Exception $e){
 							error_log('Forgot Password e-mail went wrong', $e->getMessage());
-							$error = new \Error('Problem sending you your pin, please contact the administrator');
+							$error = new \APIError('Problem sending you your pin, please contact the administrator');
 						}
 						
 					}else{
-						$error = new \Error('System error, please contact administrator');
+						$error = new \APIError('System error, please contact administrator');
 					}
 				}else{
-					$error = new \Error('E-mail not found');
+					$error = new \APIError('E-mail not found');
 				}
 			}catch (DAOException $exception){
-				$error = new \Error('System error, please contact administrator');
+				$error = new \APIError('System error, please contact administrator');
 			}
 		}
 		
@@ -77,7 +77,7 @@ class Forgot extends ControllerBase{
 	public function validate(){
 		$responseData = null;
 		$status = 'failure';
-		$error = new \Error('Please provide a valid token');
+		$error = new \APIError('Please provide a valid token');
 		
 		$pin = $_GET['pin'] ?? null;
 		$email = $_GET['email'] ?? null;
@@ -112,15 +112,15 @@ class Forgot extends ControllerBase{
 						if($usingPin) $responseData['token'] = $reset->getToken();
 					}else{
 						error_log($ret);
-						$error = new \Error('System error, please contact administrator');
+						$error = new \APIError('System error, please contact administrator');
 					}
 				}
 			}catch (DAOException $exception){
 				error_log($exception->getMessage());
-				$error = new \Error('System error, please contact administrator');
+				$error = new \APIError('System error, please contact administrator');
 			}
 		}else{
-			$error = new \Error('Please provide a valid token or pin');
+			$error = new \APIError('Please provide a valid token or pin');
 		}
 		echo $this::generateResponse($status, $responseData, $error);
 	}
@@ -131,20 +131,20 @@ class Forgot extends ControllerBase{
 	public function reset(){
 		$responseData = null;
 		$status = 'failure';
-		$error = new \Error('Unknown Error');
+		$error = new \APIError('Unknown Error');
 		
 		$token = $_POST['token'] ?? null;
 		$transient = $_POST['transient'] ?? null;
 		$password = $_POST['password'] ?? null;
 		
 		if(empty($token)){
-			$error = new \Error('Please provide a valid token');
+			$error = new \APIError('Please provide a valid token');
 		}elseif(empty($transient)){
-			$error = new \Error('Please provide a valid transient');
+			$error = new \APIError('Please provide a valid transient');
 		}
 		else{
 			if(!User::isPasswordValid($password)){
-				$error = new \Error('Please provide a valid password');
+				$error = new \APIError('Please provide a valid password');
 			}else{
 				try{
 					$reset = DAO::getOne(PasswordReset::class, 'token = ? AND transient = ? AND expiry >= ?', false,
@@ -166,7 +166,7 @@ class Forgot extends ControllerBase{
 							}
 						}
 					}else{
-						$error = new \Error('Token expired');
+						$error = new \APIError('Token expired');
 					}
 				}catch (DAOException $exception){
 				

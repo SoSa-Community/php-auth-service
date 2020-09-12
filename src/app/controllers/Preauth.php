@@ -17,7 +17,7 @@ class Preauth extends ControllerBase{
 		
 		$responseData = null;
 		$status = 'failure';
-		$error = new \Error('Please provide a device_name and device_secret', 1);
+		$error = new \APIError('Please provide a device_name and device_secret', 1);
 		
 		$request = $_POST;
 		
@@ -34,7 +34,7 @@ class Preauth extends ControllerBase{
 				
 				
 			}catch (DAOException $exception){
-				$error = new \Error('System error, please contact administrator', 3);
+				$error = new \APIError('System error, please contact administrator', 3);
 			}
 		}
 		

@@ -34,10 +34,10 @@ abstract class PreauthControllerBase extends ControllerBase {
 				$_SESSION['preAuth'] = $preauth;
 				return true;
 			}else{
-				throw new \Error('Invalid Pre-auth provided');
+				throw new \APIError('Invalid Pre-auth provided');
 			}
 		}else{
-			throw new \Error('Invalid Pre-auth provided');
+			throw new \APIError('Invalid Pre-auth provided');
 		}
 	}
 	
