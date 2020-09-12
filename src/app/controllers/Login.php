@@ -101,7 +101,7 @@ class Login extends ControllerBase{
 				$existingUser->setWelcome(true);
 				if(DAO::save($existingUser)) {
 					$errors = null;
-					$responseData = true;
+					$responseData = ['user' => $existingUser->getPublicOutput()];
 				}
 			}else {
 				
@@ -138,7 +138,7 @@ class Login extends ControllerBase{
 						if(DAO::save($existingUser)){
 							$_REQUEST['_user'] = $existingUser;
 							$errors = null;
-							$responseData = true;
+							$responseData = ['user' => $existingUser->getPublicOutput()];
 						}
 					};
 				}
