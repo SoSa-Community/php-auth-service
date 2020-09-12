@@ -76,15 +76,37 @@ abstract class PreauthControllerBase extends ControllerBase {
 			
 			if ($user === null) {
 				$user = new User();
+				$emailHash = null;
 				
-				$existingUser =  DAO::getOne(User::class, 'username = ?', false, [$username]);
-				if(!empty($existingUser)) $username = null;
-				$user->setUsername($username);
+				try{
+					User::isUsernameValid($username);
+				}
+				catch (\Exception $e){
+					$username = null;
+				}
 				
 				if(!empty($email)){
-					$emailHash = User::generateEmailHash($email);
-					$user->setEmailHash($emailHash);
+					try{
+						if(User::isEmailValid($email)){
+							$emailHash = User::generateEmailHash($email);
+						}
+					}catch (\Exception $e){
 					
+					}
+				}
+				
+				if($username !== null || $emailHash !== null){
+					$userExistErrors = User::checkUsersExist($username, $emailHash);
+					if(!empty($userExistErrors)){
+						if(isset($userExistErrors['username'])) $username = null;
+						if(isset($userExistErrors['email'])) $emailHash = null;
+					}
+				}
+				
+				$user->setUsername($username);
+				$user->setEmailHash($emailHash);
+				
+				if(!empty($email)){
 					$emailBody = EmailProvider::renderTemplate('registration', ['username' => $username]);
 					EmailProvider::send($email, $username, 'Welcome To SoSa', $emailBody);
 				}

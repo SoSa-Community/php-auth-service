@@ -74,5 +74,75 @@ class Login extends ControllerBase{
 		echo $this::generateResponse($status, $responseData, $error);
 	}
 	
-	
+	/**
+	 * @post("login/welcome")
+	 */
+	public function welcome(){
+		
+		$responseData = null;
+		$status = 'failure';
+		$errors = [];
+		
+		$request = $_POST;
+		
+		$username = $request['username'] ?? null;
+		$email = $request['email'] ?? null;
+		
+		if(isset($_REQUEST['_user']) && !empty($_REQUEST['_user'])){
+			$existingUser = $_REQUEST['_user'];
+			
+			$emailRequired = empty($existingUser->getEmailHash());
+			$usernameRequired = empty($existingUser->getUsername());
+			
+			$emailHash = null;
+			if(!empty($email)) $emailHash = User::generateEmailHash($email);
+			
+			if($existingUser->getUsername() === $username && (!$emailRequired || ($emailHash !== null && $emailHash == $existingUser->getEmailHash()))){
+				$errors = null;
+				$responseData = true;
+			}else {
+				
+				$usernameValid = false;
+				$emailIsValid = false;
+				
+				try{
+					$usernameValid = User::isUsernameValid($username);
+				}catch (\Exception $exception){
+					$errors[] = new \APIError($exception->getMessage(), 0, 'username');
+				}
+				
+				try {
+					$emailIsValid = (!$emailRequired || User::isEmailValid($email));
+				} catch (\Exception $exception) {
+					$errors[] = new \APIError($exception->getMessage(), 0, 'email');
+				}
+				
+				if ($emailIsValid && empty($errors)) {
+					
+					$userExistErrors = User::checkUsersExist($username, ($emailRequired ? $emailHash : null), $existingUser);
+					if(!empty($userExistErrors)){
+						$errors = array_merge($userExistErrors, $errors);
+					}else{
+						$existingUser->setWelcome(true);
+						
+						if (!empty($username)) {
+							$existingUser->setUsername($username);
+						}
+						if ($emailRequired && !empty($emailHash)) {
+							$existingUser->setEmailHash($emailHash);
+						}
+						
+						if(DAO::save($existingUser)){
+							$_REQUEST['_user'] = $existingUser;
+							$errors = null;
+							$responseData = true;
+						}
+					};
+				}
+			}
+		}else{
+			$errors = [new \APIError('You need to be logged in to perform this action', 1)];
+		}
+		echo $this::generateResponse($status, $responseData, $errors);
+	}
 }
