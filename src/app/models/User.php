@@ -71,7 +71,7 @@ class User{
 	public function setPassword($password){$this->password = $password;}
 	
 	public static function generateEmailHash($email){
-		return md5($email);
+		return md5(strtolower($email));
 	}
 	
 	public function getEmailHash(){return $this->emailHash;}
