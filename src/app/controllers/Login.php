@@ -1,12 +1,16 @@
 <?php
 namespace controllers;
 
+use controllers\providers\PreauthControllerBase;
+use models\Device;
+use models\ProviderUser;
 use models\User;
-use \Exception;
-use providers\WhoisProvider;
-use Ubiquity\controllers\Startup;
+use models\Session;
+use models\Preauth;
+
 use Ubiquity\exceptions\DAOException;
 use Ubiquity\orm\DAO;
+
 
 /**
  * Login Controller
@@ -147,5 +151,74 @@ class Login extends ControllerBase{
 			$errors = [new \APIError('You need to be logged in to perform this action', 1)];
 		}
 		echo $this::generateResponse($status, $responseData, $errors);
+	}
+	
+	/**
+	 * @post("login/link")
+	 */
+	public function link(){
+		$responseData = null;
+		$status = 'failure';
+		$error = new \APIError('system_error');;
+		
+		$request = $_POST;
+		
+		$preauthId = $request['preauth_id'] ?? null;
+		$token = $request['token'] ?? null;
+		
+		if(empty($preauthId)){
+			$error = new \APIError('invalid_preauth_id');
+		}else if(empty($token)){
+			$error = new \APIError('invalid_token');
+		}
+		else{
+			try{
+				$preAuth = DAO::getOne(Preauth::class, 'id = ?', false, [$preauthId]);
+				if(empty($preAuth)){
+					$error = new \APIError('invalid_preauth_id');
+				}else{
+					try{
+						$tokenData = $preAuth->validateAndDecodeToken($token);
+						if(!empty($tokenData)){
+							
+							$providerUser = DAO::getOne(ProviderUser::class, 'preauth_id = ? AND link_token = ?', false, [$preauthId, $tokenData->link_token]);
+							if(empty($providerUser)){
+								$error = new \APIError('invalid_link_token');
+							}else{
+								$user = PreauthControllerBase::createPreauthUser($providerUser->getUsername(), $providerUser->getEmail());
+								if(!empty($user)){
+									$providerUser->setLinkToken(null);
+									$providerUser->setPreauthId(null);
+									$providerUser->setUsername(null);
+									$providerUser->setEmail(null);
+									$providerUser->setUserId($user->getId());
+									if (DAO::save($providerUser)) {
+										$status = 'success';
+										$error = null;
+										
+										$device = Device::registerDevice($user->getId(), $preAuth->getDeviceSecret(), $preAuth->getDeviceName(), $preAuth->getDevicePlatform());
+										$session = Session::generateNewSession($user->getId(), $device->getId(), true);
+										if(empty($device) ||  empty($session)) {
+											error_log('Preauth::Link device or session empty');
+										}else{
+											$responseData = ['device_id' => $device->getId(), 'user' => $user->getPublicOutput(), 'session' => $session->getPublicOutput()];
+										}
+									}else{
+										error_log('Preauth::Link Unable to save provider user');
+									}
+								}else{
+									error_log('Preauth::Link Unable to create user');
+								}
+							}
+						}
+					}catch (\Exception $e){
+					
+					}
+				}
+			}catch (\Exception $e){
+				error_log('Preauth::Link '.$e->getMessage());
+			}
+		}
+		echo $this::generateResponse($status, $responseData, $error);
 	}
 }

@@ -77,4 +77,9 @@ class Preauth{
 		DAO::save($preauth);
 		return $preauth;
 	}
+	
+	public function validateAndDecodeToken($token){
+		JWT::$leeway = 60;
+		return JWT::decode($token, $this->deviceSecret, array('HS256'));
+	}
 }

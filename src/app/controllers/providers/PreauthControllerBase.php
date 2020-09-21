@@ -43,7 +43,7 @@ abstract class PreauthControllerBase extends ControllerBase {
 	
 	public function completePreauth($accessToken = '', $accessTokenSecret = '', $refreshToken = '', $expiresIn, $userId, $username, $email=null){
 		
-		if(isset($_SESSION['preAuth']) && !empty($_SESSION['preAuth'])) {
+		if((isset($_SESSION['preAuth']) && !empty($_SESSION['preAuth']))) {
 			$providerUser = DAO::getOne(ProviderUser::class, 'provider = ? AND unique_id = ?', false, [$this->provider, $userId]);
 			$user = null;
 			
@@ -58,10 +58,7 @@ abstract class PreauthControllerBase extends ControllerBase {
 				}
 			}
 			
-			if(empty($providerUser)){
-				if($_SESSION['for_login']){
-					throw new \Exception('Account not found');
-				}
+			if(empty($providerUser)) {
 				$providerUser = new ProviderUser();
 				$providerUser->setProvider($this->provider);
 			}
@@ -72,62 +69,78 @@ abstract class PreauthControllerBase extends ControllerBase {
 			$providerUser->setRefreshToken($refreshToken);
 			$providerUser->setAccessTokenExpiry(date('Y-m-j H:i', time() + intval($expiresIn)));
 			
+			$preAuth = $_SESSION['preAuth'];
 			
-			
-			if ($user === null) {
-				$user = new User();
-				$emailHash = null;
-				
-				try{
-					User::isUsernameValid($username);
-				}
-				catch (\Exception $e){
-					$username = null;
-				}
-				
-				if(!empty($email)){
-					try{
-						if(User::isEmailValid($email)){
-							$emailHash = User::generateEmailHash($email);
-						}
-					}catch (\Exception $e){
-					
-					}
-				}
-				
-				if($username !== null || $emailHash !== null){
-					$userExistErrors = User::checkUsersExist($username, $emailHash);
-					if(!empty($userExistErrors)){
-						if(isset($userExistErrors['username'])) $username = null;
-						if(isset($userExistErrors['email'])) $emailHash = null;
-					}
-				}
-				
-				$user->setUsername($username);
-				$user->setEmailHash($emailHash);
-				
-				if(!empty($email)){
-					$emailBody = EmailProvider::renderTemplate('registration', ['username' => $username]);
-					EmailProvider::send($email, $username, 'Welcome To SoSa', $emailBody);
-				}
-				
-				if (!DAO::save($user)) {
-					throw new \Exception('Failed to save user account');
-				}
+			if($_SESSION['for_login'] && (!isset($user) || empty($user))) {
+				$providerUser->setUserName($username);
+				$providerUser->setEmail($email);
+				$providerUser->generateAndSetLinkToken();
+				$providerUser->setPreauthId($preAuth->getId());
 			}
 			
-			$providerUser->setUserId($user->getId());
-			if (DAO::save($providerUser)) {
-				$preAuth = $_SESSION['preAuth'];
+			if($user === null && !$_SESSION['for_login']) $user = $this->createPreauthUser($username, $email);
+			if(!empty($user)){
+				$providerUser->setUserId($user->getId());
 				$device = Device::registerDevice($user->getId(), $preAuth->getDeviceSecret(), $preAuth->getDeviceName(), $preAuth->getDevicePlatform());
-				return ['device_id' => $device->getId()];
+			}
+			
+			if (DAO::save($providerUser)) {
+				$return = [];
+				if(isset($device)){
+					$return['device_id'] = $device->getId();
+				}else{
+					$return['unregistered'] = true;
+					$return['link_token'] = $providerUser->getLinkToken();
+				}
+				return $return;
 			} else {
 				throw new \Exception('Error saving provider user');
 			}
+			
 		}else{
 			throw new \Exception('Invalid Request');
 		}
+	}
+	
+	public static function createPreauthUser($username=null, $email=null){
+		$user = new User();
+		$emailHash = null;
 		
+		try{
+			User::isUsernameValid($username);
+		}
+		catch (\Exception $e){
+			$username = null;
+		}
+		
+		if(!empty($email)){
+			try{
+				if(User::isEmailValid($email)){
+					$emailHash = User::generateEmailHash($email);
+				}
+			}catch (\Exception $e){
+			
+			}
+		}
+		
+		if($username !== null || $emailHash !== null){
+			$userExistErrors = User::checkUsersExist($username, $emailHash);
+			if(!empty($userExistErrors)){
+				if(isset($userExistErrors['username'])) $username = null;
+				if(isset($userExistErrors['email'])) $emailHash = null;
+			}
+		}
+		
+		$user->setUsername($username);
+		$user->setEmailHash($emailHash);
+		
+		if(!empty($email)){
+			$emailBody = EmailProvider::renderTemplate('registration', ['username' => $username]);
+			EmailProvider::send($email, $username, 'Welcome To SoSa', $emailBody);
+		}
+		
+		if (!DAO::save($user)) throw new \Exception('Failed to save user account');
+		return $user;
 	}
 	
 	public function handlePreauthResponse($status='failure', $returnData = []){

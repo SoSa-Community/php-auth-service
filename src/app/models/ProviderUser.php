@@ -2,6 +2,8 @@
 
 namespace models;
 
+use Ubiquity\controllers\Startup;
+
 /**
  * @table("name"=>"provider_user")
  **/
@@ -44,6 +46,27 @@ class ProviderUser{
 	
 	private $created = '';
 	
+	/**
+	 * @column("name"=>"preauth_id","nullable"=>true)
+	 */
+	private $preauthId = null;
+	
+	/**
+	 * @column("name"=>"link_token","nullable"=>true)
+	 */
+	private $linkToken = null;
+	
+	/**
+	 * @column("name"=>"username", "nullable"=>true)
+	 */
+	private $username = '';
+	
+	/**
+	 * @column("name"=>"email", "nullable"=>true)
+	 */
+	private $email = '';
+	
+	
 	public function getId(){return $this->id;}
 	public function setId($id){$this->id = $id;}
 	
@@ -70,6 +93,28 @@ class ProviderUser{
 	
 	public function getCreated(){return $this->created;}
 	public function setCreated($created){$this->created = $created;}
+	
+	public function getUsername(){return $this->username;}
+	public function setUsername($username){$this->username = $username;}
+	
+	public function getEmail(){return $this->email;}
+	public function setEmail($email){$this->email = $email;}
+	
+	public function getPreauthId(){return $this->preauthId;}
+	public function setPreauthId($id){$this->preauthId = $id;}
+	
+	public function getLinkToken(){return $this->linkToken;}
+	public function setLinkToken($token){$this->linkToken = $token;}
+	
+	public static function generateLinkToken(){
+		$size = intval(Startup::$config['preauthLinkTokenSize']);
+		return substr(bin2hex(random_bytes($size)), 0, $size);
+	}
+	
+	public function generateAndSetLinkToken(){
+		echo self::generateLinkToken();
+		$this->setLinkToken(self::generateLinkToken());
+	}
 	
 	public function setFromJSON(array $jsonObject){
 		$this->setUniqueId($jsonObject['account_id']);
