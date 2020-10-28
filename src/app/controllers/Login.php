@@ -212,10 +212,12 @@ class Login extends ControllerBase{
 							}
 						}
 					}catch (\Exception $e){
-					
+						$error = new \APIError($e->getMessage());
+						error_log('Preauth::Link '.$e->getMessage());
 					}
 				}
 			}catch (\Exception $e){
+				$error = new \APIError($e->getMessage());
 				error_log('Preauth::Link '.$e->getMessage());
 			}
 		}

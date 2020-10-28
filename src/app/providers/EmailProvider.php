@@ -39,7 +39,6 @@ class EmailProvider{
 		if(empty($fromName)) $fromName = Startup::$config['providers']['email']['fromName'];
 		
 		if(empty($toEmail)) throw new \Exception('Invalid E-mail provided');
-		if(empty($toName)) throw new \Exception('Invalid Name');
 		
 		$mail = new PHPMailer(true);
 		try {
