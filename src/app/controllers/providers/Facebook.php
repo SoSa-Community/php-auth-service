@@ -89,7 +89,6 @@ class Facebook extends PreauthControllerBase {
 										preg_replace('/[\s]+/i','',$userData['name']),
 										$userData['email'] ?? null
 								);
-								
 								$error = null;
 							}catch (\Exception $e){
 								$error = $e;

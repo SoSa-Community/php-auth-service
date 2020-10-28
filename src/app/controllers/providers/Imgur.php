@@ -71,7 +71,7 @@ class Imgur extends PreauthControllerBase {
 				$tokens = $this->getAccessTokens($_GET['code']);
 				if(!empty($tokens) && $tokens['access_token']){
 					try{
-						$responseData = $this->completePreauth($tokens['access_token'], null, null, $tokens['expires_in'], $tokens['account_id'], $tokens['account_username']);
+						$responseData = $this->completePreauth($tokens['access_token'], null, null, $tokens['expires_in'], $tokens['account_id'], $tokens['account_username'], null, $_SESSION['preAuth']->getId() );
 						$error = null;
 					}catch (\Exception $e){
 						$error = $e;

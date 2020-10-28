@@ -148,9 +148,9 @@ abstract class PreauthControllerBase extends ControllerBase {
 		$route = $_SESSION['for_login'] ? 'login' : 'register';
 		
 		if($_SESSION['app']){
-			header('Location: sosa://'.$route.'/preauth/'.base64_encode(json_encode($returnData)));
+			header('Location: sosa://'.$route.'/preauth/'.base64_encode(json_encode($returnData)).'/');
 		}else{
-			header('Location: '.Startup::$config['websiteURI'].'/preauth/'.$route.'/'.$status.'/'.base64_encode(json_encode($returnData)));
+			header('Location: '.Startup::$config['websiteURI'].'/preauth/'.$route.'/'.$status.'/'.base64_encode(json_encode($returnData)).'/');
 		}
 	}
 	
